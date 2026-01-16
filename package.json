@@ -1,0 +1,21 @@
+{
+  "name": "budget-app",
+  "private": true,
+  "workspaces": ["api", "notifications"],
+  "scripts": {
+    "api:dev": "npm run dev -w api",
+    "api:build": "npm run build -w api",
+    "api:test": "npm run test -w api",
+    "notifications:dev": "npm run dev -w notifications",
+    "notifications:build": "npm run build -w notifications",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0"
+  }
+}
