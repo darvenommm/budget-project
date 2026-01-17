@@ -1,6 +1,6 @@
 import { prisma } from '../../../shared/database/index.js';
-import { Category, CreateCategoryData, UpdateCategoryData } from '../domain/category.entity.js';
-import { CategoryRepository } from '../domain/category.repository.js';
+import type { Category, CreateCategoryData, UpdateCategoryData } from '../domain/category.entity.js';
+import type { CategoryRepository } from '../domain/category.repository.js';
 import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
 
 export class PrismaCategoryRepository implements CategoryRepository {
