@@ -1,11 +1,12 @@
-import amqplib, { Channel, Connection, ConsumeMessage } from 'amqplib';
+import amqplib from 'amqplib';
+import type { Channel, ChannelModel, ConsumeMessage } from 'amqplib';
 import { rabbitmqConfig } from '../config/index.js';
 import { logger } from '../shared/logger/index.js';
 import { BudgetEvent, EXCHANGE_NAME, QUEUE_NAME } from './events.js';
 
 export type EventHandler = (event: BudgetEvent) => Promise<void>;
 
-let connection: Connection | null = null;
+let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
 let eventHandler: EventHandler | null = null;
 
@@ -53,11 +54,7 @@ export async function connectRabbitMQ(): Promise<void> {
 }
 
 export async function disconnectRabbitMQ(): Promise<void> {
-  if (channel) {
-    await channel.close();
-  }
-  if (connection) {
-    await connection.close();
-  }
-  logger.info('RabbitMQ consumer disconnected');
+  await channel?.close();
+  await connection?.close();
+  logger.info('RabbitMQ disconnected');
 }
