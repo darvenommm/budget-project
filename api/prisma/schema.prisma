@@ -1,74 +1,77 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  categories           Category[]
-  budgets              Budget[]
-  transactions         Transaction[]
-  goals                Goal[]
-  notificationSettings NotificationSettings?
-  refreshTokens        RefreshToken[]
+  refreshTokens RefreshToken[]
+  categories    Category[]
+  budgets       Budget[]
+  goals         Goal[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id        String   @id @default(uuid()) @db.Uuid
   token     String   @unique
+  userId    String   @map("user_id") @db.Uuid
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("refresh_tokens")
 }
 
 model Category {
-  id        String  @id @default(uuid())
-  userId    String  @map("user_id")
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
+  userId    String   @map("user_id") @db.Uuid
   icon      String?
-  isDefault Boolean @default(false) @map("is_default")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   budgetLimits BudgetLimit[]
   transactions Transaction[]
 
   @@unique([userId, name])
+  @@index([userId])
   @@map("categories")
 }
 
 model Budget {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
   month     Int
   year      Int
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   limits BudgetLimit[]
 
   @@unique([userId, month, year])
+  @@index([userId])
   @@map("budgets")
 }
 
 model BudgetLimit {
-  id          String  @id @default(uuid())
-  budgetId    String  @map("budget_id")
-  categoryId  String  @map("category_id")
+  id          String  @id @default(uuid()) @db.Uuid
+  budgetId    String  @map("budget_id") @db.Uuid
+  categoryId  String  @map("category_id") @db.Uuid
   limitAmount Decimal @map("limit_amount") @db.Decimal(12, 2)
 
   budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
@@ -78,49 +81,40 @@ model BudgetLimit {
   @@map("budget_limits")
 }
 
-model Transaction {
-  id          String          @id @default(uuid())
-  userId      String          @map("user_id")
-  categoryId  String          @map("category_id")
-  amount      Decimal         @db.Decimal(12, 2)
-  type        TransactionType
-  description String?
-  date        DateTime        @db.Date
-  createdAt   DateTime        @default(now()) @map("created_at")
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@map("transactions")
-}
-
 enum TransactionType {
   INCOME
   EXPENSE
 }
 
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @map("user_id") @db.Uuid
+  categoryId  String          @map("category_id") @db.Uuid
+  type        TransactionType
+  amount      Decimal         @db.Decimal(12, 2)
+  description String?
+  date        DateTime        @db.Date
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
 model Goal {
-  id            String    @id @default(uuid())
-  userId        String    @map("user_id")
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
   name          String
   targetAmount  Decimal   @map("target_amount") @db.Decimal(12, 2)
   currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(12, 2)
   deadline      DateTime? @db.Date
   createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("goals")
-}
-
-model NotificationSettings {
-  id                  String  @id @default(uuid())
-  userId              String  @unique @map("user_id")
-  telegramChatId      String? @map("telegram_chat_id")
-  notifyLimitExceeded Boolean @default(true) @map("notify_limit_exceeded")
-  notifyGoalReached   Boolean @default(true) @map("notify_goal_reached")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notification_settings")
 }
