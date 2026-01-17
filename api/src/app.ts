@@ -11,6 +11,8 @@ import { logger } from './shared/logger/index.js';
 import { authRoutes } from './modules/auth/api/auth.routes.js';
 import { categoryRoutes } from './modules/categories/api/category.routes.js';
 import { budgetRoutes } from './modules/budgets/api/budget.routes.js';
+import { transactionRoutes } from './modules/transactions/api/transaction.routes.js';
+import { goalRoutes } from './modules/goals/api/goal.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -38,6 +40,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await authRoutes(app);
   await categoryRoutes(app);
   await budgetRoutes(app);
+  await transactionRoutes(app);
+  await goalRoutes(app);
 
   app.setErrorHandler((error, _request, reply) => {
     logger.error('Unhandled error', { error: error.message, stack: error.stack });

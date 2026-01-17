@@ -1,0 +1,110 @@
+import { Decimal } from '@prisma/client/runtime/library';
+import { GoalRepository } from '../domain/goal.repository.js';
+import { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
+import { publishEvent, GoalDepositEvent } from '../../../shared/rabbitmq/index.js';
+import { logger } from '../../../shared/logger/index.js';
+
+export interface CreateGoalInput {
+  name: string;
+  targetAmount: number;
+  deadline?: string;
+}
+
+export interface UpdateGoalInput {
+  name?: string;
+  targetAmount?: number;
+  deadline?: string | null;
+}
+
+export class GoalService {
+  constructor(private goalRepository: GoalRepository) {}
+
+  async getAll(userId: string): Promise<Goal[]> {
+    return this.goalRepository.findByUserId(userId);
+  }
+
+  async getById(userId: string, goalId: string): Promise<Goal> {
+    const goal = await this.goalRepository.findById(goalId);
+    if (!goal || goal.userId !== userId) {
+      throw new Error('Goal not found');
+    }
+    return goal;
+  }
+
+  async create(userId: string, input: CreateGoalInput): Promise<Goal> {
+    const data: CreateGoalData = {
+      userId,
+      name: input.name,
+      targetAmount: new Decimal(input.targetAmount),
+      deadline: input.deadline ? new Date(input.deadline) : undefined,
+    };
+
+    const goal = await this.goalRepository.create(data);
+    logger.info('Goal created', { goalId: goal.id, name: input.name });
+
+    return goal;
+  }
+
+  async update(userId: string, goalId: string, input: UpdateGoalInput): Promise<Goal> {
+    const existing = await this.goalRepository.findById(goalId);
+    if (!existing || existing.userId !== userId) {
+      throw new Error('Goal not found');
+    }
+
+    const data: UpdateGoalData = {
+      name: input.name,
+      targetAmount: input.targetAmount !== undefined ? new Decimal(input.targetAmount) : undefined,
+      deadline: input.deadline === null ? null : input.deadline ? new Date(input.deadline) : undefined,
+    };
+
+    const goal = await this.goalRepository.update(goalId, data);
+    logger.info('Goal updated', { goalId });
+
+    return goal;
+  }
+
+  async delete(userId: string, goalId: string): Promise<void> {
+    const goal = await this.goalRepository.findById(goalId);
+    if (!goal || goal.userId !== userId) {
+      throw new Error('Goal not found');
+    }
+
+    await this.goalRepository.delete(goalId);
+    logger.info('Goal deleted', { goalId });
+  }
+
+  async deposit(userId: string, goalId: string, amount: number): Promise<Goal> {
+    const existing = await this.goalRepository.findById(goalId);
+    if (!existing || existing.userId !== userId) {
+      throw new Error('Goal not found');
+    }
+
+    if (amount <= 0) {
+      throw new Error('Deposit amount must be positive');
+    }
+
+    const goal = await this.goalRepository.addDeposit(goalId, new Decimal(amount));
+    logger.info('Deposit made to goal', { goalId, amount });
+
+    const currentAmount = Number(goal.currentAmount);
+    const targetAmount = Number(goal.targetAmount);
+
+    if (currentAmount >= targetAmount) {
+      const event: GoalDepositEvent = {
+        type: 'GOAL_DEPOSIT',
+        payload: {
+          userId,
+          goalId,
+          goalName: goal.name,
+          currentAmount,
+          targetAmount,
+        },
+      };
+
+      await publishEvent(event);
+      logger.info('Goal reached event published', { goalId, goalName: goal.name });
+    }
+
+    return goal;
+  }
+}
