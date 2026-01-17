@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CategoryService } from '../application/category.service.js';
-import { createCategorySchema, updateCategorySchema } from './category.dto.js';
+import { createCategorySchema, updateCategorySchema, categoryParamsSchema } from './category.dto.js';
 import { logger } from '../../../shared/logger/index.js';
 
 export class CategoryController {
@@ -34,9 +34,16 @@ export class CategoryController {
     }
   }
 
-  async update(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void> {
+  async update(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
-    const categoryId = request.params.id;
+    const paramsResult = categoryParamsSchema.safeParse(request.params);
+
+    if (!paramsResult.success) {
+      reply.status(400).send({ error: 'Validation failed', details: paramsResult.error.flatten() });
+      return;
+    }
+
+    const categoryId = paramsResult.data.id;
     const result = updateCategorySchema.safeParse(request.body);
 
     if (!result.success) {
@@ -63,9 +70,16 @@ export class CategoryController {
     }
   }
 
-  async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void> {
+  async delete(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
-    const categoryId = request.params.id;
+    const paramsResult = categoryParamsSchema.safeParse(request.params);
+
+    if (!paramsResult.success) {
+      reply.status(400).send({ error: 'Validation failed', details: paramsResult.error.flatten() });
+      return;
+    }
+
+    const categoryId = paramsResult.data.id;
 
     try {
       await this.categoryService.delete(userId, categoryId);

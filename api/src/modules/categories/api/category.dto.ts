@@ -10,5 +10,10 @@ export const updateCategorySchema = z.object({
   icon: z.string().max(10).optional(),
 });
 
+export const categoryParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export type CreateCategoryDto = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryDto = z.infer<typeof updateCategorySchema>;
+export type CategoryParamsDto = z.infer<typeof categoryParamsSchema>;

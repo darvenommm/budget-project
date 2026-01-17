@@ -11,10 +11,7 @@ import { logger } from '../../../shared/logger/index.js';
 export class BudgetController {
   constructor(private budgetService: BudgetService) {}
 
-  async getBudget(
-    request: FastifyRequest<{ Querystring: { month: string; year: string } }>,
-    reply: FastifyReply
-  ): Promise<void> {
+  async getBudget(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
     const result = getBudgetQuerySchema.safeParse(request.query);
 
@@ -33,10 +30,7 @@ export class BudgetController {
     reply.send(budget);
   }
 
-  async getOrCreateBudget(
-    request: FastifyRequest<{ Querystring: { month: string; year: string } }>,
-    reply: FastifyReply
-  ): Promise<void> {
+  async getOrCreateBudget(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
     const result = getBudgetQuerySchema.safeParse(request.query);
 
@@ -60,10 +54,7 @@ export class BudgetController {
     reply.send(budgets);
   }
 
-  async setLimit(
-    request: FastifyRequest<{ Querystring: { month: string; year: string } }>,
-    reply: FastifyReply
-  ): Promise<void> {
+  async setLimit(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
     const queryResult = getBudgetQuerySchema.safeParse(request.query);
     const bodyResult = setLimitSchema.safeParse(request.body);
@@ -96,13 +87,7 @@ export class BudgetController {
     }
   }
 
-  async removeLimit(
-    request: FastifyRequest<{
-      Querystring: { month: string; year: string };
-      Params: { categoryId: string };
-    }>,
-    reply: FastifyReply
-  ): Promise<void> {
+  async removeLimit(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
     const queryResult = getBudgetQuerySchema.safeParse(request.query);
     const paramsResult = removeLimitParamsSchema.safeParse(request.params);
@@ -137,10 +122,7 @@ export class BudgetController {
     }
   }
 
-  async deleteBudget(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
-  ): Promise<void> {
+  async deleteBudget(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const userId = request.user!.id;
     const paramsResult = deleteBudgetParamsSchema.safeParse(request.params);
 

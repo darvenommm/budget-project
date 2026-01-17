@@ -1,5 +1,5 @@
 import { prisma } from '../../../shared/database/index.js';
-import {
+import type {
   Budget,
   BudgetLimit,
   BudgetWithLimits,
@@ -7,7 +7,7 @@ import {
   CreateBudgetLimitData,
   UpdateBudgetLimitData,
 } from '../domain/budget.entity.js';
-import { BudgetRepository } from '../domain/budget.repository.js';
+import type { BudgetRepository } from '../domain/budget.repository.js';
 import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
 
 export class PrismaBudgetRepository implements BudgetRepository {
