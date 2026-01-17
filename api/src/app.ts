@@ -8,6 +8,7 @@ import {
 } from './shared/middleware/request-counter.js';
 import { formatHistogramMetrics } from './shared/decorators/latency-histogram.js';
 import { logger } from './shared/logger/index.js';
+import { authRoutes } from './modules/auth/api/auth.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -31,6 +32,8 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     reply.type('text/plain').send(combined);
   });
+
+  await authRoutes(app);
 
   app.setErrorHandler((error, _request, reply) => {
     logger.error('Unhandled error', { error: error.message, stack: error.stack });
