@@ -1,5 +1,7 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { correlationIdMiddleware } from './shared/middleware/correlation-id.js';
 import {
   requestCounterOnRequest,
@@ -13,6 +15,7 @@ import { categoryRoutes } from './modules/categories/api/category.routes.js';
 import { budgetRoutes } from './modules/budgets/api/budget.routes.js';
 import { transactionRoutes } from './modules/transactions/api/transaction.routes.js';
 import { goalRoutes } from './modules/goals/api/goal.routes.js';
+import { notificationSettingsRoutes } from './modules/notifications/api/notification-settings.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -20,6 +23,47 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(cors);
+
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Budget App API',
+        description: 'Personal budgeting application API with Telegram notifications',
+        version: '1.0.0',
+      },
+      servers: [
+        {
+          url: 'http://localhost:3000',
+          description: 'Development server',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
+      tags: [
+        { name: 'Auth', description: 'Authentication endpoints' },
+        { name: 'Categories', description: 'Category management' },
+        { name: 'Budgets', description: 'Budget management' },
+        { name: 'Transactions', description: 'Transaction management' },
+        { name: 'Goals', description: 'Financial goals' },
+        { name: 'Notifications', description: 'Notification settings' },
+      ],
+    },
+  });
+
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: true,
+    },
+  });
 
   app.addHook('onRequest', correlationIdMiddleware);
   app.addHook('onRequest', requestCounterOnRequest);
@@ -42,6 +86,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await budgetRoutes(app);
   await transactionRoutes(app);
   await goalRoutes(app);
+  await notificationSettingsRoutes(app);
 
   app.setErrorHandler((error, _request, reply) => {
     logger.error('Unhandled error', { error: error.message, stack: error.stack });
