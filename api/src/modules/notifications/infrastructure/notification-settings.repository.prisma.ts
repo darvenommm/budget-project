@@ -1,5 +1,5 @@
 import { prisma } from '../../../shared/database/index.js';
-import {
+import type {
   NotificationSettings,
   CreateNotificationSettingsData,
   UpdateNotificationSettingsData,

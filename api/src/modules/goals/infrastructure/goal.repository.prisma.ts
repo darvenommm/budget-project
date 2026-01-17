@@ -1,6 +1,6 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '../../../shared/database/index.js';
-import { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
+import type { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
 import { GoalRepository } from '../domain/goal.repository.js';
 import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
 
