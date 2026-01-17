@@ -10,11 +10,11 @@ export async function goalRoutes(app: FastifyInstance): Promise<void> {
   const controller = new GoalController(goalService);
 
   app.get('/api/goals', { preHandler: authMiddleware }, controller.getAll.bind(controller));
-  app.get('/api/goals/:id', { preHandler: authMiddleware }, controller.getById.bind(controller));
+  app.get<{ Params: { id: string } }>('/api/goals/:id', { preHandler: authMiddleware }, controller.getById.bind(controller));
   app.post('/api/goals', { preHandler: authMiddleware }, controller.create.bind(controller));
-  app.put('/api/goals/:id', { preHandler: authMiddleware }, controller.update.bind(controller));
-  app.delete('/api/goals/:id', { preHandler: authMiddleware }, controller.delete.bind(controller));
-  app.post('/api/goals/:id/deposit', { preHandler: authMiddleware }, controller.deposit.bind(controller));
+  app.put<{ Params: { id: string } }>('/api/goals/:id', { preHandler: authMiddleware }, controller.update.bind(controller));
+  app.delete<{ Params: { id: string } }>('/api/goals/:id', { preHandler: authMiddleware }, controller.delete.bind(controller));
+  app.post<{ Params: { id: string } }>('/api/goals/:id/deposit', { preHandler: authMiddleware }, controller.deposit.bind(controller));
 }
 
 export { GoalService } from '../application/goal.service.js';
