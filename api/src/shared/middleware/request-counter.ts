@@ -14,7 +14,7 @@ const metrics: Metrics = {
   requests5xx: 0,
 };
 
-export function requestCounterOnRequest(): void {
+export async function requestCounterOnRequest(): Promise<void> {
   metrics.totalRequests++;
 }
 

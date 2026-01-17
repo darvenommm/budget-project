@@ -1,12 +1,12 @@
-import pino from 'pino';
+import { pino, Logger, stdTimeFunctions } from 'pino';
 import { getCorrelationId } from './context.js';
 
-const baseLogger = pino({
+const baseLogger: Logger = pino({
   level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
   formatters: {
-    level: (label) => ({ level: label }),
+    level: (label: string) => ({ level: label }),
   },
-  timestamp: pino.stdTimeFunctions.isoTime,
+  timestamp: stdTimeFunctions.isoTime,
 });
 
 export const logger = {

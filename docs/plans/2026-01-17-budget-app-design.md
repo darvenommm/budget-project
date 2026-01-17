@@ -12,7 +12,7 @@
 
 ### Технологический стек
 - **Язык:** TypeScript
-- **Runtime:** Node.js
+- **Runtime:** Bun
 - **База данных:** PostgreSQL
 - **Брокер сообщений:** RabbitMQ
 - **Внешний API:** Telegram Bot API
@@ -382,9 +382,9 @@ async findUserById(id: string): Promise<User>
 - health.spec.ts (пустой endpoint → 200)
 
 ### Стек
-- Jest — test runner
+- Bun test — test runner (Jest-compatible)
 - Supertest — HTTP assertions
-- Testcontainers — PostgreSQL в Docker
+- Testcontainers — PostgreSQL + RabbitMQ в Docker
 
 ### Критичная бизнес-логика
 1. Расчёт потраченного в категории за месяц
@@ -414,12 +414,12 @@ async findUserById(id: string): Promise<User>
 
 | Компонент | Технология |
 |-----------|------------|
-| Runtime | Node.js 20 |
+| Runtime | Bun |
 | Язык | TypeScript |
-| HTTP Framework | Fastify или Express |
-| ORM | Prisma или TypeORM |
-| Валидация | class-validator |
+| HTTP Framework | Fastify |
+| ORM | Prisma |
+| Валидация | Zod |
 | Логирование | pino |
-| Тесты | Jest, Supertest, Testcontainers |
+| Тесты | Bun test, Supertest |
 | Документация | Swagger/OpenAPI |
 | Линтер | ESLint |

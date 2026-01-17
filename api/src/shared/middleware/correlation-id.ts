@@ -4,6 +4,12 @@ import { runWithCorrelationId } from '../logger/index.js';
 
 const CORRELATION_ID_HEADER = 'x-correlation-id';
 
+declare module 'fastify' {
+  interface FastifyRequest {
+    correlationId?: string;
+  }
+}
+
 export function correlationIdMiddleware(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -11,6 +17,7 @@ export function correlationIdMiddleware(
 ): void {
   const correlationId = (request.headers[CORRELATION_ID_HEADER] as string) ?? uuidv4();
 
+  request.correlationId = correlationId;
   reply.header(CORRELATION_ID_HEADER, correlationId);
 
   runWithCorrelationId(correlationId, () => {

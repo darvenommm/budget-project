@@ -6,7 +6,7 @@
 
 **Architecture:** Hybrid approach - monolith API (auth, budgets, transactions, goals, categories) + separate notification microservice consuming RabbitMQ events and sending Telegram messages.
 
-**Tech Stack:** TypeScript, Node.js 20, Fastify, Prisma ORM, PostgreSQL, RabbitMQ, Jest, Docker
+**Tech Stack:** TypeScript, Bun, Fastify, Prisma ORM, PostgreSQL, RabbitMQ, Bun test, Docker
 
 ---
 
@@ -32,20 +32,20 @@
   "private": true,
   "workspaces": ["api", "notifications"],
   "scripts": {
-    "api:dev": "npm run dev -w api",
-    "api:build": "npm run build -w api",
-    "api:test": "npm run test -w api",
-    "notifications:dev": "npm run dev -w notifications",
-    "notifications:build": "npm run build -w notifications",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "api:dev": "bun run dev --filter api",
+    "api:build": "bun run build --filter api",
+    "api:test": "bun run test --filter api",
+    "notifications:dev": "bun run dev --filter notifications",
+    "notifications:build": "bun run build --filter notifications",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
-    "typescript": "^5.3.3",
-    "eslint": "^8.56.0",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0"
+    "@types/bun": "latest",
+    "typescript": "^5.7.2",
+    "eslint": "^9.17.0",
+    "@eslint/js": "^9.17.0",
+    "typescript-eslint": "^8.19.0"
   }
 }
 ```
@@ -115,39 +115,38 @@ NODE_ENV=development
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsc",
-    "start": "node dist/main.js",
-    "test": "jest",
-    "test:cov": "jest --coverage",
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "dev": "bun --watch src/main.ts",
+    "build": "bun build src/main.ts --outdir dist --target bun",
+    "start": "bun dist/main.js",
+    "test": "bun test",
+    "test:cov": "bun test --coverage",
+    "db:migrate": "bunx prisma migrate dev",
+    "db:generate": "bunx prisma generate"
   },
   "dependencies": {
-    "fastify": "^4.25.2",
-    "@fastify/cors": "^8.5.0",
-    "@fastify/swagger": "^8.13.0",
-    "@fastify/swagger-ui": "^2.1.0",
-    "@prisma/client": "^5.8.1",
+    "fastify": "^5.2.1",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/swagger": "^9.4.2",
+    "@fastify/swagger-ui": "^5.2.1",
+    "@prisma/client": "^6.2.1",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
-    "pino": "^8.17.2",
-    "amqplib": "^0.10.3",
-    "zod": "^3.22.4",
-    "uuid": "^9.0.1"
+    "pino": "^9.6.0",
+    "amqplib": "^0.10.5",
+    "zod": "^3.24.1",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/jsonwebtoken": "^9.0.5",
-    "@types/amqplib": "^0.10.4",
-    "@types/uuid": "^9.0.7",
-    "prisma": "^5.8.1",
-    "tsx": "^4.7.0",
-    "jest": "^29.7.0",
-    "@types/jest": "^29.5.11",
-    "ts-jest": "^29.1.2",
-    "supertest": "^6.3.4",
-    "@types/supertest": "^6.0.2"
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/amqplib": "^0.10.6",
+    "@types/uuid": "^10.0.0",
+    "prisma": "^6.2.1",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2",
+    "testcontainers": "^10.18.0",
+    "@testcontainers/postgresql": "^10.18.0",
+    "@testcontainers/rabbitmq": "^10.18.0"
   }
 }
 ```
@@ -174,22 +173,20 @@ NODE_ENV=development
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsc",
-    "start": "node dist/main.js",
-    "test": "jest"
+    "dev": "bun --watch src/main.ts",
+    "build": "bun build src/main.ts --outdir dist --target bun",
+    "start": "bun dist/main.js",
+    "test": "bun test"
   },
   "dependencies": {
-    "amqplib": "^0.10.3",
-    "pino": "^8.17.2",
-    "fastify": "^4.25.2"
+    "amqplib": "^0.10.5",
+    "pino": "^9.6.0",
+    "fastify": "^5.2.1",
+    "@prisma/client": "^6.2.1"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.10.4",
-    "tsx": "^4.7.0",
-    "jest": "^29.7.0",
-    "@types/jest": "^29.5.11",
-    "ts-jest": "^29.1.2"
+    "@types/amqplib": "^0.10.6",
+    "prisma": "^6.2.1"
   }
 }
 ```
@@ -210,7 +207,7 @@ NODE_ENV=development
 
 **Step 9: Install dependencies**
 
-Run: `npm install`
+Run: `bun install`
 Expected: Successful installation with no errors
 
 **Step 10: Commit**
@@ -983,64 +980,98 @@ git commit -m "feat: add main entry point with graceful shutdown"
 
 ---
 
-### Task 1.11: Setup Jest configuration
+### Task 1.11: Setup Bun test configuration with Testcontainers
 
 **Files:**
-- Create: `api/jest.config.js`
 - Create: `api/tests/setup.ts`
+- Create: `api/tests/testcontainers.ts`
 
-**Step 1: Create api/jest.config.js**
+**Step 1: Create api/tests/testcontainers.ts**
 
-```javascript
-/** @type {import('jest').Config} */
-export default {
-  preset: 'ts-jest/presets/default-esm',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
-  transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        useESM: true,
-      },
-    ],
-  },
-  extensionsToTreatAsEsm: ['.ts'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
-  coverageThreshold: {
-    global: {
-      branches: 40,
-      functions: 40,
-      lines: 40,
-      statements: 40,
-    },
-  },
-};
+```typescript
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { RabbitMQContainer, StartedRabbitMQContainer } from '@testcontainers/rabbitmq';
+import { execSync } from 'child_process';
+
+let postgresContainer: StartedPostgreSqlContainer | null = null;
+let rabbitmqContainer: StartedRabbitMQContainer | null = null;
+
+export async function startContainers(): Promise<{
+  databaseUrl: string;
+  rabbitmqUrl: string;
+}> {
+  // Start PostgreSQL
+  postgresContainer = await new PostgreSqlContainer('postgres:17-alpine')
+    .withDatabase('budget_test')
+    .withUsername('test')
+    .withPassword('test')
+    .start();
+
+  const databaseUrl = postgresContainer.getConnectionUri();
+
+  // Start RabbitMQ
+  rabbitmqContainer = await new RabbitMQContainer('rabbitmq:4-alpine')
+    .withExposedPorts(5672)
+    .start();
+
+  const rabbitmqUrl = rabbitmqContainer.getAmqpUrl();
+
+  // Set environment variables
+  process.env.DATABASE_URL = databaseUrl;
+  process.env.RABBITMQ_URL = rabbitmqUrl;
+  process.env.JWT_ACCESS_SECRET = 'test-access-secret-32-chars-min!!';
+  process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-32-chars-min!';
+
+  // Run Prisma migrations
+  execSync('bunx prisma migrate deploy', {
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    cwd: process.cwd(),
+  });
+
+  return { databaseUrl, rabbitmqUrl };
+}
+
+export async function stopContainers(): Promise<void> {
+  if (postgresContainer) {
+    await postgresContainer.stop();
+  }
+  if (rabbitmqContainer) {
+    await rabbitmqContainer.stop();
+  }
+}
 ```
 
 **Step 2: Create api/tests/setup.ts**
 
 ```typescript
+import { beforeAll, afterAll } from 'bun:test';
+import { startContainers, stopContainers } from './testcontainers.js';
 import { prisma } from '../src/shared/database/index.js';
 
 beforeAll(async () => {
-  // Setup if needed
+  await startContainers();
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
+  await stopContainers();
 });
 ```
 
-**Step 3: Commit**
+**Step 3: Update bunfig.toml for test preload**
+
+Create `api/bunfig.toml`:
+
+```toml
+[test]
+preload = ["./tests/setup.ts"]
+```
+
+**Step 4: Commit**
 
 ```bash
 git add .
-git commit -m "chore: setup jest configuration"
+git commit -m "chore: setup bun test with testcontainers"
 ```
 
 ---
@@ -1053,6 +1084,7 @@ git commit -m "chore: setup jest configuration"
 **Step 1: Write failing test**
 
 ```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import { FastifyInstance } from 'fastify';
 import supertest from 'supertest';
 import { buildApp } from '../../src/app.js';
@@ -1088,7 +1120,7 @@ describe('GET /health', () => {
 
 **Step 2: Run test**
 
-Run: `cd api && npm test`
+Run: `cd api && bun test`
 Expected: PASS (health endpoint already implemented in app.ts)
 
 **Step 3: Commit**
@@ -1714,27 +1746,34 @@ git commit -m "feat(auth): register auth routes in app"
 **Step 1: Write failing tests**
 
 ```typescript
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { AuthService } from '../../src/modules/auth/application/auth.service.js';
 import { hashPassword } from '../../src/modules/auth/application/password.service.js';
 
 describe('AuthService', () => {
   const mockUserRepository = {
-    findByEmail: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
+    findByEmail: mock(() => Promise.resolve(null)),
+    findById: mock(() => Promise.resolve(null)),
+    create: mock(() => Promise.resolve(null)),
   };
 
   const mockTokenRepository = {
-    saveRefreshToken: jest.fn(),
-    findRefreshToken: jest.fn(),
-    deleteRefreshToken: jest.fn(),
-    deleteAllUserTokens: jest.fn(),
+    saveRefreshToken: mock(() => Promise.resolve({})),
+    findRefreshToken: mock(() => Promise.resolve(null)),
+    deleteRefreshToken: mock(() => Promise.resolve()),
+    deleteAllUserTokens: mock(() => Promise.resolve()),
   };
 
   let authService: AuthService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockUserRepository.findByEmail.mockReset();
+    mockUserRepository.findById.mockReset();
+    mockUserRepository.create.mockReset();
+    mockTokenRepository.saveRefreshToken.mockReset();
+    mockTokenRepository.findRefreshToken.mockReset();
+    mockTokenRepository.deleteRefreshToken.mockReset();
+    mockTokenRepository.deleteAllUserTokens.mockReset();
     authService = new AuthService(mockUserRepository, mockTokenRepository);
   });
 
@@ -1763,7 +1802,7 @@ describe('AuthService', () => {
     it('should throw error if email already registered', async () => {
       mockUserRepository.findByEmail.mockResolvedValue({ id: 'existing' });
 
-      await expect(
+      expect(
         authService.register({
           email: 'test@example.com',
           password: 'password123',
@@ -1794,7 +1833,7 @@ describe('AuthService', () => {
     it('should throw error for invalid credentials', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(
+      expect(
         authService.login({
           email: 'test@example.com',
           password: 'password123',
@@ -1807,7 +1846,7 @@ describe('AuthService', () => {
 
 **Step 2: Run tests**
 
-Run: `cd api && npm test`
+Run: `cd api && bun test`
 Expected: PASS
 
 **Step 3: Commit**
@@ -2220,17 +2259,17 @@ Each task follows TDD: write failing test → implement → verify → commit.
 
 ```dockerfile
 # Build stage
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
-COPY package*.json ./
+COPY package.json bun.lockb ./
 COPY prisma ./prisma/
-RUN npm ci
+RUN bun install --frozen-lockfile
 COPY . .
-RUN npm run build
-RUN npx prisma generate
+RUN bun run build
+RUN bunx prisma generate
 
 # Production stage
-FROM node:20-alpine
+FROM oven/bun:1-alpine
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
@@ -2241,7 +2280,7 @@ USER appuser
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
-CMD ["node", "dist/main.js"]
+CMD ["bun", "dist/main.js"]
 ```
 
 **Step 2: Commit**
@@ -2333,7 +2372,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     user: "1000:1000"
     environment:
       POSTGRES_USER: ${DB_USER:-budget}
@@ -2350,7 +2389,7 @@ services:
       - internal
 
   rabbitmq:
-    image: rabbitmq:3-alpine
+    image: rabbitmq:4-alpine
     user: "1000:1000"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-budget}
@@ -2372,7 +2411,7 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       PORT: 3000
-      NODE_ENV: production
+      BUN_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
@@ -2394,7 +2433,7 @@ services:
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-budget}:${RABBITMQ_PASSWORD:-budget}@rabbitmq:5672
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       PORT: 3001
-      NODE_ENV: production
+      BUN_ENV: production
     depends_on:
       rabbitmq:
         condition: service_healthy
