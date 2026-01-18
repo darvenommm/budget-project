@@ -1,0 +1,7 @@
+dist/
+node_modules/
+**/generated/**
+**/migrations/**
+*.md
+package-lock.json
+bun.lockb

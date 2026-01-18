@@ -2,7 +2,10 @@
   "name": "budget-app",
   "private": true,
   "type": "module",
-  "workspaces": ["api", "notifications"],
+  "workspaces": [
+    "api",
+    "notifications"
+  ],
   "scripts": {
     "api:dev": "npm run dev -w api",
     "api:build": "npm run build -w api",
@@ -10,17 +13,23 @@
     "notifications:dev": "npm run dev -w notifications",
     "notifications:build": "npm run build -w notifications",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -p api/tsconfig.json --noEmit && tsc -p notifications/tsconfig.json --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check-all": "npm run typecheck && npm run lint && npm run format:check"
   },
   "devDependencies": {
-    "dotenv": "^16.4.0",
+    "@eslint/js": "^8.56.0",
     "@types/bun": "latest",
     "@types/node": "^20.11.0",
-    "typescript": "^5.3.3",
-    "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
-    "@eslint/js": "^8.56.0",
+    "dotenv": "^16.4.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.0",
+    "typescript": "^5.3.3",
     "typescript-eslint": "^7.0.0"
   }
 }
