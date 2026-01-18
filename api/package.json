@@ -6,8 +6,11 @@
     "dev": "bun --watch src/main.ts",
     "build": "bun build src/main.ts --outdir dist --target bun --external @prisma/client",
     "start": "bun dist/main.js",
-    "test": "bun test",
-    "test:cov": "bun test --coverage",
+    "test": "bun run test:unit && npm run test:integration",
+    "test:unit": "bun test tests/unit",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' npx jest --config jest.integration.config.js",
+    "test:cov": "bun test tests/unit --coverage",
+    "test:integration:cov": "NODE_OPTIONS='--experimental-vm-modules' npx jest --config jest.integration.config.js --coverage",
     "db:migrate": "bunx prisma migrate dev",
     "db:generate": "bunx prisma generate"
   },
