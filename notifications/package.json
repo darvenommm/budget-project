@@ -4,20 +4,23 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/main.ts",
-    "build": "bun build src/main.ts --outdir dist --target bun",
+    "build": "bun build src/main.ts --outdir dist --target bun --external @prisma/client",
     "start": "bun dist/main.js",
     "test": "bun test",
-    "db:generate": "bunx prisma generate"
+    "db:generate": "bunx prisma generate",
+    "db:migrate": "bunx prisma migrate dev"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^7.2.0",
     "amqplib": "^0.10.5",
     "fastify": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pino": "^9.6.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.6",
-    "prisma": "^6.2.1"
+    "@types/jsonwebtoken": "^9.0.10",
+    "prisma": "^7.2.0"
   }
 }
