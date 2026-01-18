@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -7,120 +8,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  categories           Category[]
-  budgets              Budget[]
-  transactions         Transaction[]
-  goals                Goal[]
-  notificationSettings NotificationSettings?
-  refreshTokens        RefreshToken[]
-
-  @@map("users")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("refresh_tokens")
-}
-
-model Category {
-  id        String  @id @default(uuid())
-  userId    String  @map("user_id")
-  name      String
-  icon      String?
-  isDefault Boolean @default(false) @map("is_default")
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  budgetLimits BudgetLimit[]
-  transactions Transaction[]
-
-  @@unique([userId, name])
-  @@map("categories")
-}
-
-model Budget {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  month     Int
-  year      Int
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  limits BudgetLimit[]
-
-  @@unique([userId, month, year])
-  @@map("budgets")
-}
-
-model BudgetLimit {
-  id          String  @id @default(uuid())
-  budgetId    String  @map("budget_id")
-  categoryId  String  @map("category_id")
-  limitAmount Decimal @map("limit_amount") @db.Decimal(12, 2)
-
-  budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([budgetId, categoryId])
-  @@map("budget_limits")
-}
-
-model Transaction {
-  id          String          @id @default(uuid())
-  userId      String          @map("user_id")
-  categoryId  String          @map("category_id")
-  amount      Decimal         @db.Decimal(12, 2)
-  type        TransactionType
-  description String?
-  date        DateTime        @db.Date
-  createdAt   DateTime        @default(now()) @map("created_at")
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@map("transactions")
-}
-
-enum TransactionType {
-  INCOME
-  EXPENSE
-}
-
-model Goal {
-  id            String    @id @default(uuid())
-  userId        String    @map("user_id")
-  name          String
-  targetAmount  Decimal   @map("target_amount") @db.Decimal(12, 2)
-  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(12, 2)
-  deadline      DateTime? @db.Date
-  createdAt     DateTime  @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("goals")
-}
-
 model NotificationSettings {
-  id                  String  @id @default(uuid())
-  userId              String  @unique @map("user_id")
-  telegramChatId      String? @map("telegram_chat_id")
-  notifyLimitExceeded Boolean @default(true) @map("notify_limit_exceeded")
-  notifyGoalReached   Boolean @default(true) @map("notify_goal_reached")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @unique @map("user_id") @db.Uuid
+  telegramChatId      String?  @map("telegram_chat_id")
+  notifyLimitExceeded Boolean  @default(true) @map("notify_limit_exceeded")
+  notifyGoalReached   Boolean  @default(true) @map("notify_goal_reached")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("notification_settings")
 }
