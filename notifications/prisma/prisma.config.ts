@@ -2,14 +2,19 @@ import path from 'node:path';
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
+  earlyAccess: true,
   schema: path.join(import.meta.dirname, 'schema.prisma'),
 
-  migrations: {
-    path: path.join(import.meta.dirname, 'migrations'),
+  migrate: {
+    async url() {
+      return buildUrl();
+    },
   },
 
-  datasource: {
-    url: buildUrl(),
+  studio: {
+    async url() {
+      return buildUrl();
+    },
   },
 });
 
