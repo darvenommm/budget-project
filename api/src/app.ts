@@ -15,7 +15,6 @@ import { categoryRoutes } from './modules/categories/api/category.routes.js';
 import { budgetRoutes } from './modules/budgets/api/budget.routes.js';
 import { transactionRoutes } from './modules/transactions/api/transaction.routes.js';
 import { goalRoutes } from './modules/goals/api/goal.routes.js';
-import { notificationSettingsRoutes } from './modules/notifications/api/notification-settings.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -52,7 +51,6 @@ export async function buildApp(): Promise<FastifyInstance> {
         { name: 'Budgets', description: 'Budget management' },
         { name: 'Transactions', description: 'Transaction management' },
         { name: 'Goals', description: 'Financial goals' },
-        { name: 'Notifications', description: 'Notification settings' },
       ],
     },
   });
@@ -86,7 +84,6 @@ export async function buildApp(): Promise<FastifyInstance> {
   await budgetRoutes(app);
   await transactionRoutes(app);
   await goalRoutes(app);
-  await notificationSettingsRoutes(app);
 
   app.setErrorHandler((error, _request, reply) => {
     logger.error('Unhandled error', { error: error.message, stack: error.stack });

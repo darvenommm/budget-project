@@ -4,6 +4,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   RABBITMQ_URL: z.string().url(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
+  JWT_ACCESS_SECRET: z.string().min(32),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
@@ -35,4 +36,8 @@ export const telegramConfig = {
 export const serverConfig = {
   port: config.PORT,
   nodeEnv: config.NODE_ENV,
+};
+
+export const jwtConfig = {
+  accessSecret: config.JWT_ACCESS_SECRET,
 };

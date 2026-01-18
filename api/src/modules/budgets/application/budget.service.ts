@@ -1,4 +1,6 @@
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
+
+const Decimal = Prisma.Decimal;
 import { BudgetRepository } from '../domain/budget.repository.js';
 import { Budget, BudgetLimit, BudgetWithLimits } from '../domain/budget.entity.js';
 import { CategoryRepository } from '../../categories/domain/category.repository.js';

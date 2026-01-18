@@ -4,6 +4,7 @@ import { connectRabbitMQ, disconnectRabbitMQ, setEventHandler } from './rabbitmq
 import { connectDatabase, disconnectDatabase } from './shared/database/index.js';
 import { handleEvent } from './handlers/index.js';
 import { logger } from './shared/logger/index.js';
+import { settingsRoutes } from './settings/index.js';
 
 async function main(): Promise<void> {
   const app = Fastify({ logger: false });
@@ -13,6 +14,7 @@ async function main(): Promise<void> {
   });
 
   await connectDatabase();
+  await settingsRoutes(app);
 
   setEventHandler(handleEvent);
   await connectRabbitMQ();

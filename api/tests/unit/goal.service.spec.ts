@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
+
+const Decimal = Prisma.Decimal;
 import { GoalService } from '../../src/modules/goals/application/goal.service.js';
 
 describe('GoalService', () => {

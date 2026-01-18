@@ -1,4 +1,6 @@
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
+
+const Decimal = Prisma.Decimal;
 import { GoalRepository } from '../domain/goal.repository.js';
 import { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
 import { publishEvent, GoalDepositEvent } from '../../../shared/rabbitmq/index.js';

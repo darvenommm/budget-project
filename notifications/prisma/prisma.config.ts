@@ -1,26 +1,20 @@
+import 'dotenv/config';
 import path from 'node:path';
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
-  earlyAccess: true,
   schema: path.join(import.meta.dirname, 'schema.prisma'),
-
-  migrate: {
-    async url() {
-      return buildUrl();
-    },
+  migrations: {
+    path: path.join(import.meta.dirname, 'migrations'),
   },
-
-  studio: {
-    async url() {
-      return buildUrl();
-    },
+  datasource: {
+    url: buildUrl(),
   },
 });
 
 function buildUrl(): string {
   const host = process.env.DB_HOST ?? 'localhost';
-  const port = process.env.DB_PORT ?? '5432';
+  const port = process.env.DB_PORT ?? '5433';
   const user = process.env.DB_USER ?? 'budget';
   const password = process.env.DB_PASSWORD ?? 'budget';
   const database = 'budget_notifications';

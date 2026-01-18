@@ -1,4 +1,6 @@
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
+
+type Decimal = Prisma.Decimal;
 import { prisma } from '../../../shared/database/index.js';
 import type { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
 import { GoalRepository } from '../domain/goal.repository.js';

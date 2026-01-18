@@ -22,15 +22,17 @@ RUN bunx prisma generate
 
 # Production stage
 FROM oven/bun:1-alpine
-RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+RUN apk add --no-cache openssl
+RUN addgroup -g 1001 appgroup && adduser -u 1001 -G appgroup -s /bin/sh -D appuser
 WORKDIR /app
 COPY --from=builder /app/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/api/node_modules ./api_node_modules
 COPY --from=builder /app/api/prisma ./prisma
+RUN bunx prisma generate --schema=./prisma/schema.prisma
 RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 CMD ["bun", "dist/main.js"]
