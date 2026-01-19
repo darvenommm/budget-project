@@ -1,23 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { GoalController } from '../../../src/modules/goals/api/goal.controller.ts';
 import type { GoalService } from '../../../src/modules/goals/application/goal.service.ts';
-import type { FastifyRequest, FastifyReply } from 'fastify';
-
-// Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
-async function expectToReject(promise: Promise<unknown>): Promise<void> {
-  try {
-    await promise;
-    throw new Error('Expected promise to reject but it resolved');
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Expected promise to reject but it resolved') {
-      throw error;
-    }
-  }
-}
-
-const noop = (): void => {
-  // intentionally empty
-};
+import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
 
 describe('GoalController', () => {
   let controller: GoalController;
@@ -29,10 +13,7 @@ describe('GoalController', () => {
     delete: ReturnType<typeof mock>;
     deposit: ReturnType<typeof mock>;
   };
-  let mockReply: {
-    status: ReturnType<typeof mock>;
-    send: ReturnType<typeof mock>;
-  };
+  let mockReply: ReturnType<typeof createMockReply>;
 
   beforeEach(() => {
     mockService = {
@@ -45,13 +26,7 @@ describe('GoalController', () => {
     };
 
     controller = new GoalController(mockService as unknown as GoalService);
-
-    mockReply = {
-      status: mock(function (this: typeof mockReply) {
-        return this;
-      }),
-      send: mock(noop),
-    };
+    mockReply = createMockReply();
   });
 
   describe('getAll', () => {
@@ -62,11 +37,11 @@ describe('GoalController', () => {
       ];
       mockService.getAll.mockImplementation(() => Promise.resolve(goals));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockService.getAll).toHaveBeenCalledWith('user-id');
       expect(mockReply.send).toHaveBeenCalledWith(goals);
@@ -75,11 +50,11 @@ describe('GoalController', () => {
     it('should return empty array when no goals', async () => {
       mockService.getAll.mockImplementation(() => Promise.resolve([]));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockReply.send).toHaveBeenCalledWith([]);
     });
@@ -90,12 +65,12 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000, currentAmount: 1000 };
       mockService.getById.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.getById(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getById(mockRequest, mockReply);
 
       expect(mockService.getById).toHaveBeenCalledWith(
         'user-id',
@@ -110,12 +85,12 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000, currentAmount: 0 };
       mockService.create.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Vacation', targetAmount: 5000 },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.create(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.create(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockService.create).toHaveBeenCalledWith('user-id', {
@@ -135,12 +110,12 @@ describe('GoalController', () => {
       };
       mockService.create.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Vacation', targetAmount: 5000, deadline: '2026-12-31' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.create(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.create(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockService.create).toHaveBeenCalledWith('user-id', {
@@ -151,30 +126,30 @@ describe('GoalController', () => {
     });
 
     it('should throw ValidationError for missing name', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { targetAmount: 5000 },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for missing targetAmount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Vacation' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for negative targetAmount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Vacation', targetAmount: -1000 },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
   });
 
@@ -183,13 +158,13 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Trip to Japan', targetAmount: 7000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Trip to Japan', targetAmount: 7000 },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalledWith(
         'user-id',
@@ -203,13 +178,13 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Trip to Japan', targetAmount: 5000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Trip to Japan' },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalledWith(
         'user-id',
@@ -222,13 +197,13 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: {},
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalledWith(
         'user-id',
@@ -242,12 +217,12 @@ describe('GoalController', () => {
     it('should delete goal and return 204', async () => {
       mockService.delete.mockImplementation(() => Promise.resolve());
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.delete(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.delete(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(204);
       expect(mockService.delete).toHaveBeenCalledWith(
@@ -262,13 +237,13 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000, currentAmount: 1500 };
       mockService.deposit.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: 500 },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await controller.deposit(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.deposit(mockRequest, mockReply);
 
       expect(mockService.deposit).toHaveBeenCalledWith(
         'user-id',
@@ -279,33 +254,33 @@ describe('GoalController', () => {
     });
 
     it('should throw ValidationError for missing amount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: {},
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await expectToReject(controller.deposit(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.deposit(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for negative amount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: -100 },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await expectToReject(controller.deposit(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.deposit(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for zero amount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: 0 },
-      } as unknown as FastifyRequest<{ Params: { id: string } }>;
+      });
 
-      await expectToReject(controller.deposit(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.deposit(mockRequest, mockReply));
     });
   });
 });

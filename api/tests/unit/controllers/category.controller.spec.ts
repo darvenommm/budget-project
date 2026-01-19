@@ -1,23 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { CategoryController } from '../../../src/modules/categories/api/category.controller.ts';
 import type { CategoryService } from '../../../src/modules/categories/application/category.service.ts';
-import type { FastifyRequest, FastifyReply } from 'fastify';
-
-// Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
-async function expectToReject(promise: Promise<unknown>): Promise<void> {
-  try {
-    await promise;
-    throw new Error('Expected promise to reject but it resolved');
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Expected promise to reject but it resolved') {
-      throw error;
-    }
-  }
-}
-
-const noop = (): void => {
-  // intentionally empty
-};
+import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
 
 describe('CategoryController', () => {
   let controller: CategoryController;
@@ -27,10 +11,7 @@ describe('CategoryController', () => {
     update: ReturnType<typeof mock>;
     delete: ReturnType<typeof mock>;
   };
-  let mockReply: {
-    status: ReturnType<typeof mock>;
-    send: ReturnType<typeof mock>;
-  };
+  let mockReply: ReturnType<typeof createMockReply>;
 
   beforeEach(() => {
     mockService = {
@@ -41,13 +22,7 @@ describe('CategoryController', () => {
     };
 
     controller = new CategoryController(mockService as unknown as CategoryService);
-
-    mockReply = {
-      status: mock(function (this: typeof mockReply) {
-        return this;
-      }),
-      send: mock(noop),
-    };
+    mockReply = createMockReply();
   });
 
   describe('getAll', () => {
@@ -58,11 +33,11 @@ describe('CategoryController', () => {
       ];
       mockService.getAll.mockImplementation(() => Promise.resolve(categories));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockService.getAll).toHaveBeenCalledWith('user-id');
       expect(mockReply.send).toHaveBeenCalledWith(categories);
@@ -71,11 +46,11 @@ describe('CategoryController', () => {
     it('should return empty array when no categories', async () => {
       mockService.getAll.mockImplementation(() => Promise.resolve([]));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockReply.send).toHaveBeenCalledWith([]);
     });
@@ -86,12 +61,12 @@ describe('CategoryController', () => {
       const category = { id: 'cat-1', name: 'Food', icon: '🍔' };
       mockService.create.mockImplementation(() => Promise.resolve(category));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Food', icon: '🍔' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.create(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.create(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockService.create).toHaveBeenCalledWith('user-id', 'Food', '🍔');
@@ -99,33 +74,33 @@ describe('CategoryController', () => {
     });
 
     it('should throw ValidationError for missing name', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { icon: '🍔' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for empty name', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: '', icon: '🍔' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should create category without icon', async () => {
       const category = { id: 'cat-1', name: 'Food', icon: null };
       mockService.create.mockImplementation(() => Promise.resolve(category));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: { name: 'Food' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.create(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.create(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockService.create).toHaveBeenCalledWith('user-id', 'Food', undefined);
@@ -137,39 +112,39 @@ describe('CategoryController', () => {
       const category = { id: 'cat-1', name: 'Groceries', icon: '🛒' };
       mockService.update.mockImplementation(() => Promise.resolve(category));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Groceries', icon: '🛒' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalled();
       expect(mockReply.send).toHaveBeenCalledWith(category);
     });
 
     it('should throw ValidationError for invalid category id', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: 'invalid-uuid' },
         body: { name: 'Groceries' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.update(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.update(mockRequest, mockReply));
     });
 
     it('should update only name', async () => {
       const category = { id: 'cat-1', name: 'Groceries', icon: '🍔' };
       mockService.update.mockImplementation(() => Promise.resolve(category));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Groceries' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalledWith(
         'user-id',
@@ -182,13 +157,13 @@ describe('CategoryController', () => {
       const category = { id: 'cat-1', name: 'Food', icon: '🛒' };
       mockService.update.mockImplementation(() => Promise.resolve(category));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { icon: '🛒' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalledWith(
         'user-id',
@@ -202,12 +177,12 @@ describe('CategoryController', () => {
     it('should delete category and return 204', async () => {
       mockService.delete.mockImplementation(() => Promise.resolve());
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.delete(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.delete(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(204);
       expect(mockService.delete).toHaveBeenCalledWith(
@@ -217,12 +192,12 @@ describe('CategoryController', () => {
     });
 
     it('should throw ValidationError for invalid category id', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: 'invalid-uuid' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.delete(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.delete(mockRequest, mockReply));
     });
   });
 });

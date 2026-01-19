@@ -1,23 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { TransactionController } from '../../../src/modules/transactions/api/transaction.controller.ts';
 import type { TransactionService } from '../../../src/modules/transactions/application/transaction.service.ts';
-import type { FastifyRequest, FastifyReply } from 'fastify';
-
-// Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
-async function expectToReject(promise: Promise<unknown>): Promise<void> {
-  try {
-    await promise;
-    throw new Error('Expected promise to reject but it resolved');
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Expected promise to reject but it resolved') {
-      throw error;
-    }
-  }
-}
-
-const noop = (): void => {
-  // intentionally empty
-};
+import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
 
 describe('TransactionController', () => {
   let controller: TransactionController;
@@ -29,10 +13,7 @@ describe('TransactionController', () => {
     delete: ReturnType<typeof mock>;
     getMonthlySpending: ReturnType<typeof mock>;
   };
-  let mockReply: {
-    status: ReturnType<typeof mock>;
-    send: ReturnType<typeof mock>;
-  };
+  let mockReply: ReturnType<typeof createMockReply>;
 
   beforeEach(() => {
     mockService = {
@@ -45,18 +26,12 @@ describe('TransactionController', () => {
     };
 
     controller = new TransactionController(mockService as unknown as TransactionService);
-
-    mockReply = {
-      status: mock(function (this: typeof mockReply) {
-        return this;
-      }),
-      send: mock(noop),
-    };
+    mockReply = createMockReply();
   });
 
   describe('create', () => {
     it('should return 400 for negative amount', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: {
           amount: -100,
@@ -64,9 +39,9 @@ describe('TransactionController', () => {
           categoryId: '550e8400-e29b-41d4-a716-446655440000',
           date: '2026-01-18',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should return 201 for valid transaction', async () => {
@@ -81,32 +56,32 @@ describe('TransactionController', () => {
         Promise.resolve({ id: 'tx-id', ...transactionData }),
       );
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: transactionData,
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.create(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.create(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockService.create).toHaveBeenCalled();
     });
 
     it('should throw ValidationError for missing categoryId', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: {
           amount: 100,
           type: 'EXPENSE',
           date: '2026-01-18',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for invalid transaction type', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         body: {
           amount: 100,
@@ -114,9 +89,9 @@ describe('TransactionController', () => {
           categoryId: '550e8400-e29b-41d4-a716-446655440000',
           date: '2026-01-18',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.create(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.create(mockRequest, mockReply));
     });
   });
 
@@ -129,12 +104,12 @@ describe('TransactionController', () => {
 
       mockService.getAll.mockImplementation(() => Promise.resolve(transactions));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         query: {},
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockService.getAll).toHaveBeenCalledWith('user-id', {});
       expect(mockReply.send).toHaveBeenCalledWith(transactions);
@@ -143,12 +118,12 @@ describe('TransactionController', () => {
     it('should apply filters from query', async () => {
       mockService.getAll.mockImplementation(() => Promise.resolve([]));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         query: { type: 'EXPENSE' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getAll(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getAll(mockRequest, mockReply);
 
       expect(mockService.getAll).toHaveBeenCalledWith('user-id', { type: 'EXPENSE' });
     });
@@ -159,23 +134,23 @@ describe('TransactionController', () => {
       const transaction = { id: 'tx-id', amount: 100 };
       mockService.getById.mockImplementation(() => Promise.resolve(transaction));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.getById(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.getById(mockRequest, mockReply);
 
       expect(mockReply.send).toHaveBeenCalledWith(transaction);
     });
 
     it('should throw ValidationError for invalid uuid', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: 'invalid-uuid' },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.getById(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.getById(mockRequest, mockReply));
     });
   });
 
@@ -184,13 +159,13 @@ describe('TransactionController', () => {
       const updatedTransaction = { id: 'tx-id', amount: 150 };
       mockService.update.mockImplementation(() => Promise.resolve(updatedTransaction));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: 150 },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.update(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.update(mockRequest, mockReply);
 
       expect(mockService.update).toHaveBeenCalled();
       expect(mockReply.send).toHaveBeenCalledWith(updatedTransaction);
@@ -201,12 +176,12 @@ describe('TransactionController', () => {
     it('should delete transaction and return 204', async () => {
       mockService.delete.mockImplementation(() => Promise.resolve());
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.delete(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.delete(mockRequest, mockReply);
 
       expect(mockService.delete).toHaveBeenCalled();
       expect(mockReply.status).toHaveBeenCalledWith(204);

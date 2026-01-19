@@ -1,25 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { AuthController } from '../../../src/modules/auth/api/auth.controller.ts';
 import type { AuthService } from '../../../src/modules/auth/application/auth.service.ts';
-import type { FastifyRequest, FastifyReply } from 'fastify';
-
-// Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
-async function expectToReject(promise: Promise<unknown>): Promise<void> {
-  try {
-    await promise;
-    throw new Error('Expected promise to reject but it resolved');
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Expected promise to reject but it resolved') {
-      throw error;
-    }
-    // Expected rejection occurred
-  }
-}
-
-// Noop function for mocks
-const noop = (): void => {
-  // intentionally empty
-};
+import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -29,10 +11,7 @@ describe('AuthController', () => {
     refresh: ReturnType<typeof mock>;
     logout: ReturnType<typeof mock>;
   };
-  let mockReply: {
-    status: ReturnType<typeof mock>;
-    send: ReturnType<typeof mock>;
-  };
+  let mockReply: ReturnType<typeof createMockReply>;
 
   beforeEach(() => {
     mockService = {
@@ -43,13 +22,7 @@ describe('AuthController', () => {
     };
 
     controller = new AuthController(mockService as unknown as AuthService);
-
-    mockReply = {
-      status: mock(function (this: typeof mockReply) {
-        return this;
-      }),
-      send: mock(noop),
-    };
+    mockReply = createMockReply();
   });
 
   describe('register', () => {
@@ -57,49 +30,49 @@ describe('AuthController', () => {
       const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
       mockService.register.mockImplementation(() => Promise.resolve(tokens));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           email: 'test@example.com',
           password: 'password123',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.register(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.register(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(201);
       expect(mockReply.send).toHaveBeenCalledWith(tokens);
     });
 
     it('should throw ValidationError for invalid email', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           email: 'invalid-email',
           password: 'password123',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.register(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.register(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for short password', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           email: 'test@example.com',
           password: '123',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.register(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.register(mockRequest, mockReply));
     });
 
     it('should throw ValidationError for missing email', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           password: 'password123',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.register(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.register(mockRequest, mockReply));
     });
   });
 
@@ -108,27 +81,27 @@ describe('AuthController', () => {
       const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
       mockService.login.mockImplementation(() => Promise.resolve(tokens));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           email: 'test@example.com',
           password: 'password123',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.login(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.login(mockRequest, mockReply);
 
       expect(mockService.login).toHaveBeenCalled();
       expect(mockReply.send).toHaveBeenCalledWith(tokens);
     });
 
     it('should throw ValidationError for missing password', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           email: 'test@example.com',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.login(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.login(mockRequest, mockReply));
     });
   });
 
@@ -137,24 +110,24 @@ describe('AuthController', () => {
       const tokens = { accessToken: 'new-access', refreshToken: 'new-refresh' };
       mockService.refresh.mockImplementation(() => Promise.resolve(tokens));
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           refreshToken: 'valid-refresh-token',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.refresh(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.refresh(mockRequest, mockReply);
 
       expect(mockService.refresh).toHaveBeenCalledWith('valid-refresh-token');
       expect(mockReply.send).toHaveBeenCalledWith(tokens);
     });
 
     it('should throw ValidationError for missing refresh token', async () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {},
-      } as unknown as FastifyRequest;
+      });
 
-      await expectToReject(controller.refresh(mockRequest, mockReply as unknown as FastifyReply));
+      await expectToReject(controller.refresh(mockRequest, mockReply));
     });
   });
 
@@ -162,13 +135,13 @@ describe('AuthController', () => {
     it('should return 204 for successful logout', async () => {
       mockService.logout.mockImplementation(() => Promise.resolve());
 
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         body: {
           refreshToken: 'valid-refresh-token',
         },
-      } as unknown as FastifyRequest;
+      });
 
-      await controller.logout(mockRequest, mockReply as unknown as FastifyReply);
+      await controller.logout(mockRequest, mockReply);
 
       expect(mockService.logout).toHaveBeenCalledWith('valid-refresh-token');
       expect(mockReply.status).toHaveBeenCalledWith(204);
@@ -177,11 +150,11 @@ describe('AuthController', () => {
 
   describe('me', () => {
     it('should return user data', () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: { id: 'user-id', email: 'test@example.com' },
-      } as unknown as FastifyRequest;
+      });
 
-      controller.me(mockRequest, mockReply as unknown as FastifyReply);
+      controller.me(mockRequest, mockReply);
 
       expect(mockReply.send).toHaveBeenCalledWith({
         id: 'user-id',
@@ -190,12 +163,12 @@ describe('AuthController', () => {
     });
 
     it('should throw UnauthorizedError when no user', () => {
-      const mockRequest = {
+      const mockRequest = createMockRequest({
         user: undefined,
-      } as unknown as FastifyRequest;
+      });
 
       expect(() => {
-        controller.me(mockRequest, mockReply as unknown as FastifyReply);
+        controller.me(mockRequest, mockReply);
       }).toThrow();
     });
   });
