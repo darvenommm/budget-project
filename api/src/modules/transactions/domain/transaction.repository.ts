@@ -1,13 +1,13 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 type Decimal = Prisma.Decimal;
-import {
+import type {
   Transaction,
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilter,
   CategorySpending,
-} from './transaction.entity.js';
+} from './transaction.entity.ts';
 
 export interface TransactionRepository {
   findById(id: string): Promise<Transaction | null>;
@@ -19,11 +19,11 @@ export interface TransactionRepository {
     userId: string,
     categoryId: string,
     month: number,
-    year: number
+    year: number,
   ): Promise<Decimal>;
   getAllCategorySpendingsForMonth(
     userId: string,
     month: number,
-    year: number
+    year: number,
   ): Promise<CategorySpending[]>;
 }

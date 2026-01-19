@@ -1,13 +1,10 @@
-import { UserRepository } from '../domain/user.repository.js';
-import { TokenRepository } from '../infrastructure/token.repository.prisma.js';
-import { hashPassword, verifyPassword } from './password.service.js';
-import {
-  generateTokenPair,
-  verifyRefreshToken,
-  getRefreshTokenExpiry,
-  TokenPair,
-} from './jwt.service.js';
-import { logger } from '../../../shared/logger/index.js';
+import type { UserRepository } from '../domain/user.repository.ts';
+import type { TokenRepository } from '../infrastructure/token.repository.prisma.ts';
+import { hashPassword, verifyPassword } from './password.service.ts';
+import type { TokenPair } from './jwt.service.ts';
+import { generateTokenPair, verifyRefreshToken, getRefreshTokenExpiry } from './jwt.service.ts';
+import { logger } from '../../../shared/logger/index.ts';
+import { ConflictError, UnauthorizedError } from '../../../shared/errors/index.ts';
 
 export interface RegisterInput {
   email: string;
@@ -22,13 +19,13 @@ export interface LoginInput {
 export class AuthService {
   constructor(
     private userRepository: UserRepository,
-    private tokenRepository: TokenRepository
+    private tokenRepository: TokenRepository,
   ) {}
 
   async register(input: RegisterInput): Promise<TokenPair> {
     const existingUser = await this.userRepository.findByEmail(input.email);
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new ConflictError('EMAIL_ALREADY_REGISTERED', 'Email already registered');
     }
 
     const passwordHash = await hashPassword(input.password);
@@ -43,7 +40,7 @@ export class AuthService {
     await this.tokenRepository.saveRefreshToken(
       user.id,
       tokens.refreshToken,
-      getRefreshTokenExpiry()
+      getRefreshTokenExpiry(),
     );
 
     return tokens;
@@ -52,12 +49,12 @@ export class AuthService {
   async login(input: LoginInput): Promise<TokenPair> {
     const user = await this.userRepository.findByEmail(input.email);
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
     const isValidPassword = await verifyPassword(input.password, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
     logger.info('User logged in', { userId: user.id });
@@ -66,7 +63,7 @@ export class AuthService {
     await this.tokenRepository.saveRefreshToken(
       user.id,
       tokens.refreshToken,
-      getRefreshTokenExpiry()
+      getRefreshTokenExpiry(),
     );
 
     return tokens;
@@ -75,7 +72,7 @@ export class AuthService {
   async refresh(refreshToken: string): Promise<TokenPair> {
     const storedToken = await this.tokenRepository.findRefreshToken(refreshToken);
     if (!storedToken || storedToken.expiresAt < new Date()) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedError('INVALID_REFRESH_TOKEN', 'Invalid refresh token');
     }
 
     const payload = verifyRefreshToken(refreshToken);
@@ -86,7 +83,7 @@ export class AuthService {
     await this.tokenRepository.saveRefreshToken(
       payload.userId,
       tokens.refreshToken,
-      getRefreshTokenExpiry()
+      getRefreshTokenExpiry(),
     );
 
     return tokens;

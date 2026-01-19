@@ -1,5 +1,6 @@
-import { pino, Logger, stdTimeFunctions } from 'pino';
-import { getCorrelationId } from './context.js';
+import type { Logger } from 'pino';
+import { pino, stdTimeFunctions } from 'pino';
+import { getCorrelationId } from './context.ts';
 
 const baseLogger: Logger = pino({
   level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
@@ -24,4 +25,4 @@ export const logger = {
   },
 };
 
-export { getCorrelationId, runWithCorrelationId } from './context.js';
+export { getCorrelationId, runWithCorrelationId } from './context.ts';

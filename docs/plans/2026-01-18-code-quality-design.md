@@ -1,7 +1,8 @@
 # План улучшения качества кода
 
 **Дата:** 2026-01-18
-**Статус:** Утверждён
+**Статус:** ✅ Завершён (2026-01-19)
+**Отчёт:** [2026-01-19-completion-report.md](./2026-01-19-completion-report.md)
 
 ## Цели
 
@@ -185,13 +186,13 @@
 
 **Definition of Done:**
 
-- [ ] `tsc --noEmit` проходит без ошибок (оба сервиса)
-- [ ] `eslint .` проходит без warnings и errors
-- [ ] `prettier --check .` проходит без изменений
-- [ ] `npm test` проходит, coverage ≥ 80% (branches, functions, lines, statements)
-- [ ] Нет `any` в коде (кроме сгенерированного)
-- [ ] Нет `// @ts-ignore` или `// @ts-expect-error`
-- [ ] Нет `// eslint-disable` без документированной причины
+- [x] `tsc --noEmit` проходит без ошибок (оба сервиса)
+- [x] `eslint .` проходит без warnings и errors
+- [x] `prettier --check .` проходит без изменений
+- [x] `npm test` проходит, coverage ≥ 80% (branches, functions, lines, statements)
+- [x] Нет `any` в коде (кроме сгенерированного)
+- [x] Нет `// @ts-ignore` или `// @ts-expect-error`
+- [x] Нет `// eslint-disable` без документированной причины
 
 ---
 

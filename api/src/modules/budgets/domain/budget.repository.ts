@@ -1,17 +1,21 @@
-import {
+import type {
   Budget,
   BudgetLimit,
   BudgetWithLimits,
   CreateBudgetData,
   CreateBudgetLimitData,
   UpdateBudgetLimitData,
-} from './budget.entity.js';
+} from './budget.entity.ts';
 
 export interface BudgetRepository {
   findById(id: string): Promise<Budget | null>;
   findByIdWithLimits(id: string): Promise<BudgetWithLimits | null>;
   findByUserIdAndPeriod(userId: string, month: number, year: number): Promise<Budget | null>;
-  findByUserIdWithLimits(userId: string, month: number, year: number): Promise<BudgetWithLimits | null>;
+  findByUserIdWithLimits(
+    userId: string,
+    month: number,
+    year: number,
+  ): Promise<BudgetWithLimits | null>;
   findAllByUserId(userId: string): Promise<Budget[]>;
   create(data: CreateBudgetData): Promise<Budget>;
   delete(id: string): Promise<void>;

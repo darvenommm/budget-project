@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 type Decimal = Prisma.Decimal;
 
@@ -16,11 +16,11 @@ export interface CreateGoalData {
   userId: string;
   name: string;
   targetAmount: Decimal;
-  deadline?: Date;
+  deadline?: Date | undefined;
 }
 
 export interface UpdateGoalData {
-  name?: string;
-  targetAmount?: Decimal;
-  deadline?: Date | null;
+  name?: string | undefined;
+  targetAmount?: Decimal | undefined;
+  deadline?: Date | null | undefined;
 }

@@ -1,6 +1,6 @@
-import { FastifyRequest, FastifyReply, HookHandlerDoneFunction } from 'fastify';
+import type { FastifyRequest, FastifyReply, HookHandlerDoneFunction } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
-import { runWithCorrelationId } from '../logger/index.js';
+import { runWithCorrelationId } from '../logger/index.ts';
 
 const CORRELATION_ID_HEADER = 'x-correlation-id';
 
@@ -13,12 +13,13 @@ declare module 'fastify' {
 export function correlationIdMiddleware(
   request: FastifyRequest,
   reply: FastifyReply,
-  done: HookHandlerDoneFunction
+  done: HookHandlerDoneFunction,
 ): void {
-  const correlationId = (request.headers[CORRELATION_ID_HEADER] as string) ?? uuidv4();
+  const headerValue = request.headers[CORRELATION_ID_HEADER];
+  const correlationId = typeof headerValue === 'string' ? headerValue : uuidv4();
 
   request.correlationId = correlationId;
-  reply.header(CORRELATION_ID_HEADER, correlationId);
+  void reply.header(CORRELATION_ID_HEADER, correlationId);
 
   runWithCorrelationId(correlationId, () => {
     done();

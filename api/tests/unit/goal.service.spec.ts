@@ -1,44 +1,75 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { Prisma } from '@prisma/client';
+import { GoalService } from '../../src/modules/goals/application/goal.service.ts';
+import type { GoalRepository } from '../../src/modules/goals/domain/goal.repository.ts';
+import type { Goal } from '../../src/modules/goals/domain/goal.entity.ts';
 
 const Decimal = Prisma.Decimal;
-import { GoalService } from '../../src/modules/goals/application/goal.service.js';
+
+// Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
+async function expectToRejectWith(promise: Promise<unknown>, message: string): Promise<void> {
+  try {
+    await promise;
+    throw new Error('Expected promise to reject but it resolved');
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Expected promise to reject but it resolved') {
+      throw error;
+    }
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(message);
+  }
+}
 
 describe('GoalService', () => {
-  const mockGoalRepository = {
-    findById: mock(() => Promise.resolve(null)),
-    findByUserId: mock(() => Promise.resolve([])),
-    create: mock(() => Promise.resolve(null)),
-    update: mock(() => Promise.resolve(null)),
-    delete: mock(() => Promise.resolve()),
-    addDeposit: mock(() => Promise.resolve(null)),
+  const createMockGoal = (overrides: Partial<Goal> = {}): Goal => ({
+    id: 'goal-123',
+    userId: 'user-123',
+    name: 'Test Goal',
+    targetAmount: new Decimal(1000),
+    currentAmount: new Decimal(0),
+    deadline: null,
+    createdAt: new Date(),
+    ...overrides,
+  });
+
+  // Store mock functions separately to avoid unbound-method issues
+  const findByIdMock = mock(() => Promise.resolve(null as Goal | null));
+  const findByUserIdMock = mock(() => Promise.resolve([] as Goal[]));
+  const createGoalMock = mock(() => Promise.resolve(createMockGoal()));
+  const updateGoalMock = mock(() => Promise.resolve(createMockGoal()));
+  const deleteGoalMock = mock(() => Promise.resolve());
+  const addDepositMock = mock(() => Promise.resolve(createMockGoal()));
+
+  const mockGoalRepository: GoalRepository = {
+    findById: findByIdMock,
+    findByUserId: findByUserIdMock,
+    create: createGoalMock,
+    update: updateGoalMock,
+    delete: deleteGoalMock,
+    addDeposit: addDepositMock,
   };
 
   let goalService: GoalService;
 
   beforeEach(() => {
-    mockGoalRepository.findById.mockReset();
-    mockGoalRepository.findByUserId.mockReset();
-    mockGoalRepository.create.mockReset();
-    mockGoalRepository.update.mockReset();
-    mockGoalRepository.delete.mockReset();
-    mockGoalRepository.addDeposit.mockReset();
+    findByIdMock.mockReset();
+    findByUserIdMock.mockReset();
+    createGoalMock.mockReset();
+    updateGoalMock.mockReset();
+    deleteGoalMock.mockReset();
+    addDepositMock.mockReset();
     goalService = new GoalService(mockGoalRepository);
   });
 
   describe('create', () => {
     it('should create a new goal', async () => {
-      const mockGoal = {
-        id: 'goal-123',
-        userId: 'user-123',
+      const mockGoal = createMockGoal({
         name: 'New Car',
         targetAmount: new Decimal(10000),
-        currentAmount: new Decimal(0),
         deadline: new Date('2025-12-31'),
-        createdAt: new Date(),
-      };
+      });
 
-      mockGoalRepository.create.mockResolvedValue(mockGoal);
+      createGoalMock.mockResolvedValue(mockGoal);
 
       const result = await goalService.create('user-123', {
         name: 'New Car',
@@ -48,55 +79,31 @@ describe('GoalService', () => {
 
       expect(result.id).toBe('goal-123');
       expect(result.name).toBe('New Car');
-      expect(mockGoalRepository.create).toHaveBeenCalled();
+      expect(createGoalMock).toHaveBeenCalled();
     });
   });
 
   describe('getAll', () => {
     it('should return all goals for user', async () => {
       const mockGoals = [
-        {
-          id: 'goal-1',
-          userId: 'user-123',
-          name: 'Goal 1',
-          targetAmount: new Decimal(1000),
-          currentAmount: new Decimal(500),
-          deadline: null,
-          createdAt: new Date(),
-        },
-        {
-          id: 'goal-2',
-          userId: 'user-123',
-          name: 'Goal 2',
-          targetAmount: new Decimal(2000),
-          currentAmount: new Decimal(0),
-          deadline: null,
-          createdAt: new Date(),
-        },
+        createMockGoal({ id: 'goal-1', name: 'Goal 1', currentAmount: new Decimal(500) }),
+        createMockGoal({ id: 'goal-2', name: 'Goal 2', targetAmount: new Decimal(2000) }),
       ];
 
-      mockGoalRepository.findByUserId.mockResolvedValue(mockGoals);
+      findByUserIdMock.mockResolvedValue(mockGoals);
 
       const result = await goalService.getAll('user-123');
 
       expect(result).toHaveLength(2);
-      expect(mockGoalRepository.findByUserId).toHaveBeenCalledWith('user-123');
+      expect(findByUserIdMock).toHaveBeenCalledWith('user-123');
     });
   });
 
   describe('getById', () => {
     it('should return goal if found and owned by user', async () => {
-      const mockGoal = {
-        id: 'goal-123',
-        userId: 'user-123',
-        name: 'Test Goal',
-        targetAmount: new Decimal(1000),
-        currentAmount: new Decimal(0),
-        deadline: null,
-        createdAt: new Date(),
-      };
+      const mockGoal = createMockGoal();
 
-      mockGoalRepository.findById.mockResolvedValue(mockGoal);
+      findByIdMock.mockResolvedValue(mockGoal);
 
       const result = await goalService.getById('user-123', 'goal-123');
 
@@ -104,97 +111,61 @@ describe('GoalService', () => {
     });
 
     it('should throw error if goal not found', async () => {
-      mockGoalRepository.findById.mockResolvedValue(null);
+      findByIdMock.mockResolvedValue(null);
 
-      expect(goalService.getById('user-123', 'goal-123')).rejects.toThrow('Goal not found');
+      await expectToRejectWith(goalService.getById('user-123', 'goal-123'), 'Goal not found');
     });
 
     it('should throw error if goal belongs to another user', async () => {
-      mockGoalRepository.findById.mockResolvedValue({
-        id: 'goal-123',
-        userId: 'other-user',
-        name: 'Test Goal',
-        targetAmount: new Decimal(1000),
-        currentAmount: new Decimal(0),
-        deadline: null,
-        createdAt: new Date(),
-      });
+      findByIdMock.mockResolvedValue(createMockGoal({ userId: 'other-user' }));
 
-      expect(goalService.getById('user-123', 'goal-123')).rejects.toThrow('Goal not found');
+      await expectToRejectWith(goalService.getById('user-123', 'goal-123'), 'Goal not found');
     });
   });
 
   describe('deposit', () => {
     it('should add deposit to goal', async () => {
-      const existingGoal = {
-        id: 'goal-123',
-        userId: 'user-123',
-        name: 'Test Goal',
-        targetAmount: new Decimal(1000),
-        currentAmount: new Decimal(0),
-        deadline: null,
-        createdAt: new Date(),
-      };
+      const existingGoal = createMockGoal();
+      const updatedGoal = createMockGoal({ currentAmount: new Decimal(500) });
 
-      const updatedGoal = {
-        ...existingGoal,
-        currentAmount: new Decimal(500),
-      };
-
-      mockGoalRepository.findById.mockResolvedValue(existingGoal);
-      mockGoalRepository.addDeposit.mockResolvedValue(updatedGoal);
+      findByIdMock.mockResolvedValue(existingGoal);
+      addDepositMock.mockResolvedValue(updatedGoal);
 
       const result = await goalService.deposit('user-123', 'goal-123', 500);
 
       expect(Number(result.currentAmount)).toBe(500);
-      expect(mockGoalRepository.addDeposit).toHaveBeenCalled();
+      expect(addDepositMock).toHaveBeenCalled();
     });
 
     it('should throw error if deposit amount is not positive', async () => {
-      mockGoalRepository.findById.mockResolvedValue({
-        id: 'goal-123',
-        userId: 'user-123',
-        name: 'Test Goal',
-        targetAmount: new Decimal(1000),
-        currentAmount: new Decimal(0),
-        deadline: null,
-        createdAt: new Date(),
-      });
+      findByIdMock.mockResolvedValue(createMockGoal());
 
-      expect(goalService.deposit('user-123', 'goal-123', 0)).rejects.toThrow(
-        'Deposit amount must be positive'
+      await expectToRejectWith(
+        goalService.deposit('user-123', 'goal-123', 0),
+        'Deposit amount must be positive',
       );
     });
 
     it('should throw error if goal not found', async () => {
-      mockGoalRepository.findById.mockResolvedValue(null);
+      findByIdMock.mockResolvedValue(null);
 
-      expect(goalService.deposit('user-123', 'goal-123', 500)).rejects.toThrow('Goal not found');
+      await expectToRejectWith(goalService.deposit('user-123', 'goal-123', 500), 'Goal not found');
     });
   });
 
   describe('delete', () => {
     it('should delete goal if found and owned by user', async () => {
-      mockGoalRepository.findById.mockResolvedValue({
-        id: 'goal-123',
-        userId: 'user-123',
-        name: 'Test Goal',
-        targetAmount: new Decimal(1000),
-        currentAmount: new Decimal(0),
-        deadline: null,
-        createdAt: new Date(),
-      });
-      mockGoalRepository.delete.mockResolvedValue();
+      findByIdMock.mockResolvedValue(createMockGoal());
 
       await goalService.delete('user-123', 'goal-123');
 
-      expect(mockGoalRepository.delete).toHaveBeenCalledWith('goal-123');
+      expect(deleteGoalMock).toHaveBeenCalledWith('goal-123');
     });
 
     it('should throw error if goal not found', async () => {
-      mockGoalRepository.findById.mockResolvedValue(null);
+      findByIdMock.mockResolvedValue(null);
 
-      expect(goalService.delete('user-123', 'goal-123')).rejects.toThrow('Goal not found');
+      await expectToRejectWith(goalService.delete('user-123', 'goal-123'), 'Goal not found');
     });
   });
 });

@@ -1,45 +1,112 @@
 import Fastify from 'fastify';
-import { serverConfig } from './config/index.js';
-import { connectRabbitMQ, disconnectRabbitMQ, setEventHandler } from './rabbitmq/consumer.js';
-import { connectDatabase, disconnectDatabase } from './shared/database/index.js';
-import { handleEvent } from './handlers/index.js';
-import { logger } from './shared/logger/index.js';
-import { settingsRoutes } from './settings/index.js';
+import { serverConfig } from './config/index.ts';
+import {
+  connectRabbitMQ,
+  disconnectRabbitMQ,
+  setEventHandler,
+  isRabbitMQConnected,
+  stopConsumer,
+} from './rabbitmq/consumer.ts';
+import { connectDatabase, disconnectDatabase, prisma } from './shared/database/index.ts';
+import { handleEvent } from './handlers/index.ts';
+import { logger } from './shared/logger/index.ts';
+import { settingsRoutes } from './settings/index.ts';
+
+let isShuttingDown = false;
+let activeHandlers = 0;
+
+export function incrementActiveHandlers(): void {
+  activeHandlers++;
+}
+
+export function decrementActiveHandlers(): void {
+  activeHandlers--;
+}
+
+export function getActiveHandlers(): number {
+  return activeHandlers;
+}
 
 async function main(): Promise<void> {
   const app = Fastify({ logger: false });
 
-  app.get('/health', async () => {
-    return { status: 'ok', service: 'notifications' };
+  app.get('/health', async (_request, reply) => {
+    const checks = {
+      rabbitmq: isRabbitMQConnected(),
+      database: await prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
+    };
+
+    const healthy = Object.values(checks).every(Boolean);
+
+    await reply.status(healthy ? 200 : 503).send({
+      status: healthy ? 'ok' : 'degraded',
+      service: 'notifications',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   await connectDatabase();
-  await settingsRoutes(app);
+  settingsRoutes(app);
 
-  setEventHandler(handleEvent);
+  // Wrap event handler with active handler tracking
+  const wrappedEventHandler = async (event: Parameters<typeof handleEvent>[0]): Promise<void> => {
+    incrementActiveHandlers();
+    try {
+      await handleEvent(event);
+    } finally {
+      decrementActiveHandlers();
+    }
+  };
+
+  setEventHandler(wrappedEventHandler);
   await connectRabbitMQ();
 
   await app.listen({ port: serverConfig.port, host: '0.0.0.0' });
-  logger.info(`Notifications service started on port ${serverConfig.port}`);
+  logger.info(`Notifications service started on port ${String(serverConfig.port)}`);
 
-  const shutdown = async (signal: string): Promise<void> => {
+  const gracefulShutdown = async (signal: string): Promise<void> => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
     logger.info(`Received ${signal}, starting graceful shutdown`);
 
+    // Stop accepting new messages
+    await stopConsumer();
+
+    // Wait for active handlers to complete (max 30s)
+    const maxWait = 30000;
+    const startTime = Date.now();
+
+    while (activeHandlers > 0 && Date.now() - startTime < maxWait) {
+      logger.info(`Waiting for ${String(activeHandlers)} active handlers to complete`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (activeHandlers > 0) {
+      logger.warn(`Force shutdown with ${String(activeHandlers)} active handlers`);
+    }
+
+    // Close connections
     await app.close();
     logger.info('HTTP server closed');
 
     await disconnectRabbitMQ();
     await disconnectDatabase();
 
-    logger.info('Graceful shutdown completed');
+    logger.info('Graceful shutdown complete');
     process.exit(0);
   };
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => {
+    void gracefulShutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void gracefulShutdown('SIGINT');
+  });
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   logger.error('Failed to start notifications service', { error });
   process.exit(1);
 });

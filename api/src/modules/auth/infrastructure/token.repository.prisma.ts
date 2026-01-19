@@ -1,5 +1,5 @@
-import { prisma } from '../../../shared/database/index.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+import { prisma } from '../../../shared/database/index.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export interface RefreshToken {
   id: string;
@@ -30,7 +30,9 @@ export class PrismaTokenRepository implements TokenRepository {
 
   @LatencyHistogram('db_token')
   async deleteRefreshToken(token: string): Promise<void> {
-    await prisma.refreshToken.delete({ where: { token } }).catch(() => {});
+    await prisma.refreshToken.delete({ where: { token } }).catch(() => {
+      /* Token may already be deleted */
+    });
   }
 
   @LatencyHistogram('db_token')

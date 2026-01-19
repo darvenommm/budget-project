@@ -13,14 +13,23 @@ export const updateTransactionSchema = z.object({
   amount: z.number().positive().optional(),
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
   description: z.string().max(255).nullable().optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .optional(),
 });
 
 export const transactionFilterSchema = z.object({
   categoryId: z.string().uuid().optional(),
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 export const monthlySpendingSchema = z.object({

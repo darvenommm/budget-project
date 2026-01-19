@@ -1,10 +1,10 @@
 import { Prisma } from '@prisma/client';
 
 type Decimal = Prisma.Decimal;
-import { prisma } from '../../../shared/database/index.js';
-import type { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
-import { GoalRepository } from '../domain/goal.repository.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+import { prisma } from '../../../shared/database/index.ts';
+import type { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.ts';
+import { GoalRepository } from '../domain/goal.repository.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export class PrismaGoalRepository implements GoalRepository {
   @LatencyHistogram('db_goal')
@@ -22,12 +22,24 @@ export class PrismaGoalRepository implements GoalRepository {
 
   @LatencyHistogram('db_goal')
   async create(data: CreateGoalData): Promise<Goal> {
-    return prisma.goal.create({ data });
+    return prisma.goal.create({
+      data: {
+        ...data,
+        deadline: data.deadline ?? null,
+      },
+    });
   }
 
   @LatencyHistogram('db_goal')
   async update(id: string, data: UpdateGoalData): Promise<Goal> {
-    return prisma.goal.update({ where: { id }, data });
+    return prisma.goal.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.targetAmount !== undefined && { targetAmount: data.targetAmount }),
+        ...(data.deadline !== undefined && { deadline: data.deadline }),
+      },
+    });
   }
 
   @LatencyHistogram('db_goal')

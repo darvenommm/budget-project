@@ -1,5 +1,6 @@
 # Build stage
-FROM oven/bun:1 AS builder
+FROM oven/bun:1-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 # Copy root workspace files
@@ -27,12 +28,13 @@ RUN addgroup -g 1001 appgroup && adduser -u 1001 -G appgroup -s /bin/sh -D appus
 WORKDIR /app
 COPY --from=builder /app/notifications/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/notifications/node_modules ./notifications_node_modules
 COPY --from=builder /app/notifications/prisma ./prisma
 RUN bunx prisma generate --schema=./prisma/schema.prisma
+COPY notifications/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 3001
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3001/health || exit 1
-CMD ["bun", "dist/main.js"]
+ENTRYPOINT ["docker-entrypoint.sh"]

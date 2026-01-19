@@ -1,6 +1,25 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { verifyAccessToken } from '../../modules/auth/application/jwt.service.js';
-import { prisma } from '../database/index.js';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import { verifyAccessToken } from '../../modules/auth/application/jwt.service.ts';
+import { prisma } from '../database/index.ts';
+import { UnauthorizedError } from '../errors/index.ts';
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+}
+
+/**
+ * Safely extracts the authenticated user from the request.
+ * Throws UnauthorizedError if user is not present.
+ * Use this in route handlers protected by authMiddleware.
+ */
+export function getAuthenticatedUser(request: FastifyRequest): AuthenticatedUser {
+  const user = request.user;
+  if (!user) {
+    throw new UnauthorizedError('UNAUTHORIZED', 'User not authenticated');
+  }
+  return user;
+}
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -11,15 +30,11 @@ declare module 'fastify' {
   }
 }
 
-export async function authMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function authMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const authHeader = request.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    reply.status(401).send({ error: 'Missing authorization header' });
-    return;
+    return reply.status(401).send({ error: 'Missing authorization header' });
   }
 
   const token = authHeader.slice(7);
@@ -32,12 +47,11 @@ export async function authMiddleware(
     });
 
     if (!user) {
-      reply.status(401).send({ error: 'User not found' });
-      return;
+      return reply.status(401).send({ error: 'User not found' });
     }
 
     request.user = user;
   } catch {
-    reply.status(401).send({ error: 'Invalid token' });
+    return reply.status(401).send({ error: 'Invalid token' });
   }
 }

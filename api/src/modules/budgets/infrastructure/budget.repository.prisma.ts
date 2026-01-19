@@ -1,4 +1,4 @@
-import { prisma } from '../../../shared/database/index.js';
+import { prisma } from '../../../shared/database/index.ts';
 import type {
   Budget,
   BudgetLimit,
@@ -6,9 +6,9 @@ import type {
   CreateBudgetData,
   CreateBudgetLimitData,
   UpdateBudgetLimitData,
-} from '../domain/budget.entity.js';
-import type { BudgetRepository } from '../domain/budget.repository.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+} from '../domain/budget.entity.ts';
+import type { BudgetRepository } from '../domain/budget.repository.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export class PrismaBudgetRepository implements BudgetRepository {
   @LatencyHistogram('db_budget')
@@ -40,7 +40,11 @@ export class PrismaBudgetRepository implements BudgetRepository {
   }
 
   @LatencyHistogram('db_budget')
-  async findByUserIdWithLimits(userId: string, month: number, year: number): Promise<BudgetWithLimits | null> {
+  async findByUserIdWithLimits(
+    userId: string,
+    month: number,
+    year: number,
+  ): Promise<BudgetWithLimits | null> {
     return prisma.budget.findUnique({
       where: { userId_month_year: { userId, month, year } },
       include: {
@@ -86,7 +90,10 @@ export class PrismaBudgetRepository implements BudgetRepository {
   }
 
   @LatencyHistogram('db_budget_limit')
-  async findLimitByBudgetAndCategory(budgetId: string, categoryId: string): Promise<BudgetLimit | null> {
+  async findLimitByBudgetAndCategory(
+    budgetId: string,
+    categoryId: string,
+  ): Promise<BudgetLimit | null> {
     return prisma.budgetLimit.findUnique({
       where: { budgetId_categoryId: { budgetId, categoryId } },
       include: {

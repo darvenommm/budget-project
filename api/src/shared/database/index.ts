@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import { logger } from '../logger/index.js';
+import { logger } from '../logger/index.ts';
 
 function getDatabaseUrl(): string {
   // Prefer DATABASE_URL if set (used by tests and some deployment configs)

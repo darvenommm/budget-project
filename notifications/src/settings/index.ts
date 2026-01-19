@@ -1,1 +1,1 @@
-export { settingsRoutes } from './settings.routes.js';
+export { settingsRoutes } from './settings.routes.ts';

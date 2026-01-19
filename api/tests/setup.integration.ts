@@ -1,5 +1,5 @@
-import { connectDatabase, disconnectDatabase, prisma, pool } from '../src/shared/database/index.js';
-import { connectRabbitMQ, disconnectRabbitMQ } from '../src/shared/rabbitmq/index.js';
+import { connectDatabase, disconnectDatabase, prisma, pool } from '../src/shared/database/index.ts';
+import { connectRabbitMQ, disconnectRabbitMQ } from '../src/shared/rabbitmq/index.ts';
 
 // Containers are started by globalSetup.ts before tests run
 // Here we just connect to the already-running services

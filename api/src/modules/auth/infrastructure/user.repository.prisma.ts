@@ -1,7 +1,7 @@
-import { prisma } from '../../../shared/database/index.js';
-import type { User, CreateUserData } from '../domain/user.entity.js';
-import type { UserRepository } from '../domain/user.repository.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+import { prisma } from '../../../shared/database/index.ts';
+import type { User, CreateUserData } from '../domain/user.entity.ts';
+import type { UserRepository } from '../domain/user.repository.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export class PrismaUserRepository implements UserRepository {
   @LatencyHistogram('db_user')

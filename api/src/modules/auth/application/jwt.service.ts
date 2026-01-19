@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { jwtConfig } from '../../../config/index.js';
+import { jwtConfig } from '../../../config/index.ts';
 
 export interface TokenPayload {
   userId: string;
@@ -12,19 +12,19 @@ export interface TokenPair {
 
 function parseExpiresIn(value: string): number {
   const match = value.match(/^(\d+)([smhd])$/);
-  if (!match) {
+  if (!match?.[1] || !match[2]) {
     return 900; // default 15 minutes in seconds
   }
 
   const num = parseInt(match[1], 10);
-  const unit = match[2];
+  const unit = match[2] as 's' | 'm' | 'h' | 'd';
 
-  const multipliers: Record<string, number> = {
+  const multipliers = {
     s: 1,
     m: 60,
     h: 60 * 60,
     d: 24 * 60 * 60,
-  };
+  } as const;
 
   return num * multipliers[unit];
 }
@@ -58,19 +58,19 @@ export function generateTokenPair(userId: string): TokenPair {
 
 export function getRefreshTokenExpiry(): Date {
   const match = jwtConfig.refreshExpiresIn.match(/^(\d+)([dhms])$/);
-  if (!match) {
+  if (!match?.[1] || !match[2]) {
     return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // default 7 days
   }
 
   const value = parseInt(match[1], 10);
-  const unit = match[2];
+  const unit = match[2] as 's' | 'm' | 'h' | 'd';
 
-  const multipliers: Record<string, number> = {
+  const multipliers = {
     s: 1000,
     m: 60 * 1000,
     h: 60 * 60 * 1000,
     d: 24 * 60 * 60 * 1000,
-  };
+  } as const;
 
   return new Date(Date.now() + value * multipliers[unit]);
 }

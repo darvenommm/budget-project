@@ -1,4 +1,4 @@
-import { Category, CreateCategoryData, UpdateCategoryData } from './category.entity.js';
+import type { Category, CreateCategoryData, UpdateCategoryData } from './category.entity.ts';
 
 export interface CategoryRepository {
   findById(id: string): Promise<Category | null>;

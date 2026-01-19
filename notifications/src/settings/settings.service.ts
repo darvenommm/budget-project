@@ -1,5 +1,6 @@
-import { prisma } from '../shared/database/index.js';
-import type { UpdateSettingsDto, SettingsResponse } from './settings.dto.js';
+import type { Prisma } from '@prisma/client';
+import { prisma } from '../shared/database/index.ts';
+import type { UpdateSettingsDto, SettingsResponse } from './settings.dto.ts';
 
 export class SettingsService {
   async getOrCreate(userId: string): Promise<SettingsResponse> {
@@ -17,13 +18,23 @@ export class SettingsService {
   }
 
   async update(userId: string, dto: UpdateSettingsDto): Promise<SettingsResponse> {
+    // Build create/update data explicitly to satisfy exactOptionalPropertyTypes
+    const createData: Prisma.NotificationSettingsUncheckedCreateInput = { userId };
+    const updateData: Prisma.NotificationSettingsUpdateInput = {};
+
+    if (dto.notifyLimitExceeded !== undefined) {
+      createData.notifyLimitExceeded = dto.notifyLimitExceeded;
+      updateData.notifyLimitExceeded = dto.notifyLimitExceeded;
+    }
+    if (dto.notifyGoalReached !== undefined) {
+      createData.notifyGoalReached = dto.notifyGoalReached;
+      updateData.notifyGoalReached = dto.notifyGoalReached;
+    }
+
     return prisma.notificationSettings.upsert({
       where: { userId },
-      create: {
-        userId,
-        ...dto,
-      },
-      update: dto,
+      create: createData,
+      update: updateData,
     });
   }
 

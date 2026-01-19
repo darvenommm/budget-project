@@ -1,4 +1,4 @@
-import { User, CreateUserData } from './user.entity.js';
+import type { User, CreateUserData } from './user.entity.ts';
 
 export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;

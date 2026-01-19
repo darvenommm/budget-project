@@ -16,6 +16,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
     networks:
       - internal
 
@@ -34,19 +39,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     networks:
       - internal
 
   rabbitmq:
     image: rabbitmq:4-alpine
+    ports:
+      - "5673:5672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-budget}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-budget}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     networks:
       - internal
 
@@ -72,6 +91,14 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     networks:
       - internal
 
@@ -97,6 +124,14 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     networks:
       - internal
 
@@ -115,12 +150,18 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
     networks:
       - internal
 
 volumes:
   postgres_api_data:
   postgres_notifications_data:
+  rabbitmq_data:
 
 networks:
   internal:

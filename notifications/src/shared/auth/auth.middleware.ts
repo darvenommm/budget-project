@@ -1,5 +1,5 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { verifyAccessToken } from './jwt.service.js';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import { verifyAccessToken } from './jwt.service.ts';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -9,14 +9,11 @@ declare module 'fastify' {
   }
 }
 
-export async function authMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export function authMiddleware(request: FastifyRequest, reply: FastifyReply): void {
   const authHeader = request.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    reply.status(401).send({ error: 'Missing authorization header' });
+    void reply.status(401).send({ error: 'Missing authorization header' });
     return;
   }
 
@@ -26,6 +23,6 @@ export async function authMiddleware(
     const payload = verifyAccessToken(token);
     request.user = { id: payload.userId };
   } catch {
-    reply.status(401).send({ error: 'Invalid token' });
+    void reply.status(401).send({ error: 'Invalid token' });
   }
 }

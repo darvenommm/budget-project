@@ -1,45 +1,64 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { SettingsService } from './settings.service.js';
-import { updateSettingsSchema, linkTelegramSchema } from './settings.dto.js';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { SettingsService } from './settings.service.ts';
+import { updateSettingsSchema, linkTelegramSchema } from './settings.dto.ts';
 
 export class SettingsController {
   constructor(private readonly service: SettingsService) {}
 
+  private getUserId(request: FastifyRequest, reply: FastifyReply): string | null {
+    const user = request.user;
+    if (!user) {
+      void reply.status(401).send({ error: 'Unauthorized' });
+      return null;
+    }
+    return user.id;
+  }
+
   async get(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const userId = request.user!.id;
+    const userId = this.getUserId(request, reply);
+    if (!userId) return;
+
     const settings = await this.service.getOrCreate(userId);
-    reply.send(settings);
+    await reply.send(settings);
   }
 
   async update(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const userId = request.user!.id;
-    const parseResult = updateSettingsSchema.safeParse(request.body);
+    const userId = this.getUserId(request, reply);
+    if (!userId) return;
 
+    const parseResult = updateSettingsSchema.safeParse(request.body);
     if (!parseResult.success) {
-      reply.status(400).send({ error: 'Invalid request body', details: parseResult.error.flatten() });
+      await reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parseResult.error.flatten() });
       return;
     }
 
     const settings = await this.service.update(userId, parseResult.data);
-    reply.send(settings);
+    await reply.send(settings);
   }
 
   async linkTelegram(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const userId = request.user!.id;
-    const parseResult = linkTelegramSchema.safeParse(request.body);
+    const userId = this.getUserId(request, reply);
+    if (!userId) return;
 
+    const parseResult = linkTelegramSchema.safeParse(request.body);
     if (!parseResult.success) {
-      reply.status(400).send({ error: 'Invalid request body', details: parseResult.error.flatten() });
+      await reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parseResult.error.flatten() });
       return;
     }
 
     const settings = await this.service.linkTelegram(userId, parseResult.data.chatId);
-    reply.send(settings);
+    await reply.send(settings);
   }
 
   async unlinkTelegram(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const userId = request.user!.id;
+    const userId = this.getUserId(request, reply);
+    if (!userId) return;
+
     const settings = await this.service.unlinkTelegram(userId);
-    reply.send(settings);
+    await reply.send(settings);
   }
 }

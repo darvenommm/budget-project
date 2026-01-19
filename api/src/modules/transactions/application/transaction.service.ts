@@ -1,48 +1,49 @@
 import { Prisma } from '@prisma/client';
 
 const Decimal = Prisma.Decimal;
-import { TransactionRepository } from '../domain/transaction.repository.js';
-import {
+import type { TransactionRepository } from '../domain/transaction.repository.ts';
+import type {
   Transaction,
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilter,
   TransactionType,
   CategorySpending,
-} from '../domain/transaction.entity.js';
-import { BudgetRepository } from '../../budgets/domain/budget.repository.js';
-import { CategoryRepository } from '../../categories/domain/category.repository.js';
-import { publishEvent, TransactionCreatedEvent } from '../../../shared/rabbitmq/index.js';
-import { logger } from '../../../shared/logger/index.js';
+} from '../domain/transaction.entity.ts';
+import type { BudgetRepository } from '../../budgets/domain/budget.repository.ts';
+import type { CategoryRepository } from '../../categories/domain/category.repository.ts';
+import { publishEvent, createTransactionCreatedEvent } from '../../../shared/rabbitmq/index.ts';
+import { logger } from '../../../shared/logger/index.ts';
+import { NotFoundError } from '../../../shared/errors/index.ts';
 
 export interface CreateTransactionInput {
   categoryId: string;
   amount: number;
   type: TransactionType;
-  description?: string;
+  description?: string | undefined;
   date: string;
 }
 
 export interface UpdateTransactionInput {
-  categoryId?: string;
-  amount?: number;
-  type?: TransactionType;
-  description?: string | null;
-  date?: string;
+  categoryId?: string | undefined;
+  amount?: number | undefined;
+  type?: TransactionType | undefined;
+  description?: string | null | undefined;
+  date?: string | undefined;
 }
 
 export interface TransactionFilterInput {
-  categoryId?: string;
-  type?: TransactionType;
-  startDate?: string;
-  endDate?: string;
+  categoryId?: string | undefined;
+  type?: TransactionType | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
 }
 
 export class TransactionService {
   constructor(
     private transactionRepository: TransactionRepository,
     private budgetRepository: BudgetRepository,
-    private categoryRepository: CategoryRepository
+    private categoryRepository: CategoryRepository,
   ) {}
 
   async getAll(userId: string, filter?: TransactionFilterInput): Promise<Transaction[]> {
@@ -60,7 +61,7 @@ export class TransactionService {
   async getById(userId: string, transactionId: string): Promise<Transaction> {
     const transaction = await this.transactionRepository.findById(transactionId);
     if (!transaction || transaction.userId !== userId) {
-      throw new Error('Transaction not found');
+      throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
     return transaction;
   }
@@ -68,7 +69,7 @@ export class TransactionService {
   async create(userId: string, input: CreateTransactionInput): Promise<Transaction> {
     const category = await this.categoryRepository.findById(input.categoryId);
     if (!category || category.userId !== userId) {
-      throw new Error('Category not found');
+      throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 
     const data: CreateTransactionData = {
@@ -93,17 +94,17 @@ export class TransactionService {
   async update(
     userId: string,
     transactionId: string,
-    input: UpdateTransactionInput
+    input: UpdateTransactionInput,
   ): Promise<Transaction> {
     const existing = await this.transactionRepository.findById(transactionId);
     if (!existing || existing.userId !== userId) {
-      throw new Error('Transaction not found');
+      throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
 
     if (input.categoryId) {
       const category = await this.categoryRepository.findById(input.categoryId);
       if (!category || category.userId !== userId) {
-        throw new Error('Category not found');
+        throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
       }
     }
 
@@ -124,7 +125,7 @@ export class TransactionService {
   async delete(userId: string, transactionId: string): Promise<void> {
     const transaction = await this.transactionRepository.findById(transactionId);
     if (!transaction || transaction.userId !== userId) {
-      throw new Error('Transaction not found');
+      throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
 
     await this.transactionRepository.delete(transactionId);
@@ -134,7 +135,7 @@ export class TransactionService {
   async getMonthlySpending(
     userId: string,
     month: number,
-    year: number
+    year: number,
   ): Promise<CategorySpending[]> {
     return this.transactionRepository.getAllCategorySpendingsForMonth(userId, month, year);
   }
@@ -142,7 +143,7 @@ export class TransactionService {
   private async checkBudgetLimitAndNotify(
     userId: string,
     categoryId: string,
-    transaction: Transaction
+    transaction: Transaction,
   ): Promise<void> {
     const transactionDate = transaction.date;
     const month = transactionDate.getMonth() + 1;
@@ -162,7 +163,7 @@ export class TransactionService {
       userId,
       categoryId,
       month,
-      year
+      year,
     );
 
     const limitAmount = Number(limit.limitAmount);
@@ -171,20 +172,17 @@ export class TransactionService {
     if (spentAmount >= limitAmount) {
       const categoryName = transaction.category?.name ?? 'Unknown';
 
-      const event: TransactionCreatedEvent = {
-        type: 'TRANSACTION_CREATED',
-        payload: {
-          userId,
-          categoryId,
-          categoryName,
-          amount: Number(transaction.amount),
-          budgetId: budget.id,
-          currentSpent: spentAmount,
-          limitAmount,
-        },
-      };
+      const event = createTransactionCreatedEvent({
+        userId,
+        categoryId,
+        categoryName,
+        amount: Number(transaction.amount),
+        budgetId: budget.id,
+        currentSpent: spentAmount,
+        limitAmount,
+      });
 
-      await publishEvent(event);
+      publishEvent(event);
       logger.info('Budget limit exceeded event published', {
         userId,
         categoryId,

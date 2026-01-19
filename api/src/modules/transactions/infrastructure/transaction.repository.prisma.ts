@@ -2,16 +2,16 @@ import { Prisma } from '@prisma/client';
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
-import { prisma } from '../../../shared/database/index.js';
+import { prisma } from '../../../shared/database/index.ts';
 import type {
   Transaction,
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilter,
   CategorySpending,
-} from '../domain/transaction.entity.js';
-import type { TransactionRepository } from '../domain/transaction.repository.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+} from '../domain/transaction.entity.ts';
+import type { TransactionRepository } from '../domain/transaction.repository.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export class PrismaTransactionRepository implements TransactionRepository {
   @LatencyHistogram('db_transaction')
@@ -48,7 +48,10 @@ export class PrismaTransactionRepository implements TransactionRepository {
   @LatencyHistogram('db_transaction')
   async create(data: CreateTransactionData): Promise<Transaction> {
     return prisma.transaction.create({
-      data,
+      data: {
+        ...data,
+        description: data.description ?? null,
+      },
       include: {
         category: {
           select: { id: true, name: true, icon: true },
@@ -61,7 +64,13 @@ export class PrismaTransactionRepository implements TransactionRepository {
   async update(id: string, data: UpdateTransactionData): Promise<Transaction> {
     return prisma.transaction.update({
       where: { id },
-      data,
+      data: {
+        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
+        ...(data.amount !== undefined && { amount: data.amount }),
+        ...(data.type !== undefined && { type: data.type }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.date !== undefined && { date: data.date }),
+      },
       include: {
         category: {
           select: { id: true, name: true, icon: true },
@@ -80,7 +89,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
     userId: string,
     categoryId: string,
     month: number,
-    year: number
+    year: number,
   ): Promise<Decimal> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
@@ -107,7 +116,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
   async getAllCategorySpendingsForMonth(
     userId: string,
     month: number,
-    year: number
+    year: number,
   ): Promise<CategorySpending[]> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);

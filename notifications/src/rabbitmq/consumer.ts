@@ -1,10 +1,13 @@
 import amqplib from 'amqplib';
 import type { Channel, ChannelModel, ConsumeMessage } from 'amqplib';
-import { rabbitmqConfig } from '../config/index.js';
-import { logger } from '../shared/logger/index.js';
-import { BudgetEvent, EXCHANGE_NAME, QUEUE_NAME } from './events.js';
+import { rabbitmqConfig } from '../config/index.ts';
+import { logger } from '../shared/logger/index.ts';
+import type { BudgetEvent } from './events.ts';
+import { EXCHANGE_NAME, QUEUE_NAME } from './events.ts';
 
 export type EventHandler = (event: BudgetEvent) => Promise<void>;
+
+const HANDLER_TIMEOUT = 30000;
 
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
@@ -21,17 +24,24 @@ async function handleMessage(msg: ConsumeMessage | null): Promise<void> {
 
   try {
     const content = msg.content.toString();
-    const event: BudgetEvent = JSON.parse(content);
+    const event = JSON.parse(content) as BudgetEvent;
 
     logger.info('Event received', { type: event.type });
 
-    await eventHandler(event);
+    await Promise.race([
+      eventHandler(event),
+      new Promise((_, reject) =>
+        setTimeout(() => {
+          reject(new Error('Handler timeout'));
+        }, HANDLER_TIMEOUT),
+      ),
+    ]);
 
     channel.ack(msg);
     logger.debug('Event processed successfully', { type: event.type });
   } catch (error) {
-    logger.error('Failed to process event', { error });
-    channel.nack(msg, false, false);
+    logger.error('Message handling failed', { error });
+    channel.nack(msg, false, true); // requeue for retry
   }
 }
 
@@ -40,11 +50,15 @@ export async function connectRabbitMQ(): Promise<void> {
     connection = await amqplib.connect(rabbitmqConfig.url);
     channel = await connection.createChannel();
 
+    await channel.prefetch(1);
+
     await channel.assertExchange(EXCHANGE_NAME, 'fanout', { durable: true });
     await channel.assertQueue(QUEUE_NAME, { durable: true });
     await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, '');
 
-    await channel.consume(QUEUE_NAME, handleMessage);
+    await channel.consume(QUEUE_NAME, (msg) => {
+      void handleMessage(msg);
+    });
 
     logger.info('RabbitMQ consumer connected', { queue: QUEUE_NAME });
   } catch (error) {
@@ -57,4 +71,15 @@ export async function disconnectRabbitMQ(): Promise<void> {
   await channel?.close();
   await connection?.close();
   logger.info('RabbitMQ disconnected');
+}
+
+export function isRabbitMQConnected(): boolean {
+  return connection !== null && channel !== null;
+}
+
+export async function stopConsumer(): Promise<void> {
+  if (channel) {
+    await channel.cancel(QUEUE_NAME);
+    logger.info('RabbitMQ consumer stopped');
+  }
 }

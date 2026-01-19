@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 interface Metrics {
   totalRequests: number;
@@ -14,7 +14,7 @@ const metrics: Metrics = {
   requests5xx: 0,
 };
 
-export async function requestCounterOnRequest(): Promise<void> {
+export function requestCounterOnRequest(): void {
   metrics.totalRequests++;
 }
 
@@ -36,9 +36,9 @@ export function getMetrics(): Metrics {
 
 export function formatMetrics(): string {
   return [
-    `http_requests_total ${metrics.totalRequests}`,
-    `http_requests_2xx_total ${metrics.requests2xx}`,
-    `http_requests_4xx_total ${metrics.requests4xx}`,
-    `http_requests_5xx_total ${metrics.requests5xx}`,
+    `http_requests_total ${String(metrics.totalRequests)}`,
+    `http_requests_2xx_total ${String(metrics.requests2xx)}`,
+    `http_requests_4xx_total ${String(metrics.requests4xx)}`,
+    `http_requests_5xx_total ${String(metrics.requests5xx)}`,
   ].join('\n');
 }

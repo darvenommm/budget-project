@@ -1,21 +1,22 @@
 import { Prisma } from '@prisma/client';
 
 const Decimal = Prisma.Decimal;
-import { GoalRepository } from '../domain/goal.repository.js';
-import { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.js';
-import { publishEvent, GoalDepositEvent } from '../../../shared/rabbitmq/index.js';
-import { logger } from '../../../shared/logger/index.js';
+import type { GoalRepository } from '../domain/goal.repository.ts';
+import type { Goal, CreateGoalData, UpdateGoalData } from '../domain/goal.entity.ts';
+import { publishEvent, createGoalDepositEvent } from '../../../shared/rabbitmq/index.ts';
+import { logger } from '../../../shared/logger/index.ts';
+import { NotFoundError, ValidationError } from '../../../shared/errors/index.ts';
 
 export interface CreateGoalInput {
   name: string;
   targetAmount: number;
-  deadline?: string;
+  deadline?: string | undefined;
 }
 
 export interface UpdateGoalInput {
-  name?: string;
-  targetAmount?: number;
-  deadline?: string | null;
+  name?: string | undefined;
+  targetAmount?: number | undefined;
+  deadline?: string | null | undefined;
 }
 
 export class GoalService {
@@ -28,7 +29,7 @@ export class GoalService {
   async getById(userId: string, goalId: string): Promise<Goal> {
     const goal = await this.goalRepository.findById(goalId);
     if (!goal || goal.userId !== userId) {
-      throw new Error('Goal not found');
+      throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
     return goal;
   }
@@ -50,13 +51,14 @@ export class GoalService {
   async update(userId: string, goalId: string, input: UpdateGoalInput): Promise<Goal> {
     const existing = await this.goalRepository.findById(goalId);
     if (!existing || existing.userId !== userId) {
-      throw new Error('Goal not found');
+      throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 
     const data: UpdateGoalData = {
       name: input.name,
       targetAmount: input.targetAmount !== undefined ? new Decimal(input.targetAmount) : undefined,
-      deadline: input.deadline === null ? null : input.deadline ? new Date(input.deadline) : undefined,
+      deadline:
+        input.deadline === null ? null : input.deadline ? new Date(input.deadline) : undefined,
     };
 
     const goal = await this.goalRepository.update(goalId, data);
@@ -68,7 +70,7 @@ export class GoalService {
   async delete(userId: string, goalId: string): Promise<void> {
     const goal = await this.goalRepository.findById(goalId);
     if (!goal || goal.userId !== userId) {
-      throw new Error('Goal not found');
+      throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 
     await this.goalRepository.delete(goalId);
@@ -78,11 +80,11 @@ export class GoalService {
   async deposit(userId: string, goalId: string, amount: number): Promise<Goal> {
     const existing = await this.goalRepository.findById(goalId);
     if (!existing || existing.userId !== userId) {
-      throw new Error('Goal not found');
+      throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 
     if (amount <= 0) {
-      throw new Error('Deposit amount must be positive');
+      throw new ValidationError('INVALID_DEPOSIT_AMOUNT', 'Deposit amount must be positive');
     }
 
     const goal = await this.goalRepository.addDeposit(goalId, new Decimal(amount));
@@ -92,18 +94,15 @@ export class GoalService {
     const targetAmount = Number(goal.targetAmount);
 
     if (currentAmount >= targetAmount) {
-      const event: GoalDepositEvent = {
-        type: 'GOAL_DEPOSIT',
-        payload: {
-          userId,
-          goalId,
-          goalName: goal.name,
-          currentAmount,
-          targetAmount,
-        },
-      };
+      const event = createGoalDepositEvent({
+        userId,
+        goalId,
+        goalName: goal.name,
+        currentAmount,
+        targetAmount,
+      });
 
-      await publishEvent(event);
+      publishEvent(event);
       logger.info('Goal reached event published', { goalId, goalName: goal.name });
     }
 

@@ -1,7 +1,11 @@
-import { prisma } from '../../../shared/database/index.js';
-import type { Category, CreateCategoryData, UpdateCategoryData } from '../domain/category.entity.js';
-import type { CategoryRepository } from '../domain/category.repository.js';
-import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.js';
+import { prisma } from '../../../shared/database/index.ts';
+import type {
+  Category,
+  CreateCategoryData,
+  UpdateCategoryData,
+} from '../domain/category.entity.ts';
+import type { CategoryRepository } from '../domain/category.repository.ts';
+import { LatencyHistogram } from '../../../shared/decorators/latency-histogram.ts';
 
 export class PrismaCategoryRepository implements CategoryRepository {
   @LatencyHistogram('db_category')
@@ -21,17 +25,37 @@ export class PrismaCategoryRepository implements CategoryRepository {
 
   @LatencyHistogram('db_category')
   async create(data: CreateCategoryData): Promise<Category> {
-    return prisma.category.create({ data });
+    return prisma.category.create({
+      data: {
+        userId: data.userId,
+        name: data.name,
+        icon: data.icon ?? null,
+        isDefault: data.isDefault ?? false,
+      },
+    });
   }
 
   @LatencyHistogram('db_category')
   async createMany(data: CreateCategoryData[]): Promise<void> {
-    await prisma.category.createMany({ data });
+    await prisma.category.createMany({
+      data: data.map((d) => ({
+        userId: d.userId,
+        name: d.name,
+        icon: d.icon ?? null,
+        isDefault: d.isDefault ?? false,
+      })),
+    });
   }
 
   @LatencyHistogram('db_category')
   async update(id: string, data: UpdateCategoryData): Promise<Category> {
-    return prisma.category.update({ where: { id }, data });
+    return prisma.category.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.icon !== undefined && { icon: data.icon ?? null }),
+      },
+    });
   }
 
   @LatencyHistogram('db_category')

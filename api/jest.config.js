@@ -16,14 +16,15 @@ export default {
   },
   testTimeout: 30000,
   extensionsToTreatAsEsm: ['.ts'],
+  testPathIgnorePatterns: ['<rootDir>/tests/integration/'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
   coverageThreshold: {
     global: {
-      branches: 40,
-      functions: 40,
-      lines: 40,
-      statements: 40,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
   },
 };

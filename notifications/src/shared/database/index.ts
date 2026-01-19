@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import { logger } from '../logger/index.js';
+import { logger } from '../logger/index.ts';
 
 function buildDatabaseUrl(): string {
-  const host = process.env.DB_HOST ?? 'localhost';
-  const port = process.env.DB_PORT ?? '5432';
-  const user = process.env.DB_USER ?? 'budget';
-  const password = process.env.DB_PASSWORD ?? 'budget';
+  const host = process.env['DB_HOST'] ?? 'localhost';
+  const port = process.env['DB_PORT'] ?? '5432';
+  const user = process.env['DB_USER'] ?? 'budget';
+  const password = process.env['DB_PASSWORD'] ?? 'budget';
   const database = 'budget_notifications';
 
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
@@ -18,9 +18,7 @@ const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({
   adapter,
-  log: [
-    { emit: 'event', level: 'error' },
-  ],
+  log: [{ emit: 'event', level: 'error' }],
 });
 
 prisma.$on('error', (e) => {

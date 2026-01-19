@@ -9,19 +9,22 @@ interface Histogram {
   count: number;
 }
 
-const histograms: Map<string, Histogram> = new Map();
+const histograms = new Map<string, Histogram>();
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
 function getOrCreateHistogram(name: string): Histogram {
-  if (!histograms.has(name)) {
-    histograms.set(name, {
-      buckets: DEFAULT_BUCKETS.map((le) => ({ le, count: 0 })),
-      sum: 0,
-      count: 0,
-    });
+  const existing = histograms.get(name);
+  if (existing) {
+    return existing;
   }
-  return histograms.get(name)!;
+  const newHistogram: Histogram = {
+    buckets: DEFAULT_BUCKETS.map((le) => ({ le, count: 0 })),
+    sum: 0,
+    count: 0,
+  };
+  histograms.set(name, newHistogram);
+  return newHistogram;
 }
 
 function recordDuration(name: string, durationSeconds: number): void {
@@ -36,15 +39,17 @@ function recordDuration(name: string, durationSeconds: number): void {
   }
 }
 
+type AsyncMethod = (...args: unknown[]) => Promise<unknown>;
+
 export function LatencyHistogram(name: string): MethodDecorator {
   return function (
     _target: unknown,
     _propertyKey: string | symbol,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor {
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as AsyncMethod;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (this: unknown, ...args: unknown[]): Promise<unknown> {
       const start = performance.now();
       try {
         return await originalMethod.apply(this, args);
@@ -63,11 +68,13 @@ export function formatHistogramMetrics(): string {
 
   for (const [name, histogram] of histograms) {
     for (const bucket of histogram.buckets) {
-      lines.push(`${name}_duration_seconds_bucket{le="${bucket.le}"} ${bucket.count}`);
+      lines.push(
+        `${name}_duration_seconds_bucket{le="${String(bucket.le)}"} ${String(bucket.count)}`,
+      );
     }
-    lines.push(`${name}_duration_seconds_bucket{le="+Inf"} ${histogram.count}`);
-    lines.push(`${name}_duration_seconds_sum ${histogram.sum}`);
-    lines.push(`${name}_duration_seconds_count ${histogram.count}`);
+    lines.push(`${name}_duration_seconds_bucket{le="+Inf"} ${String(histogram.count)}`);
+    lines.push(`${name}_duration_seconds_sum ${String(histogram.sum)}`);
+    lines.push(`${name}_duration_seconds_count ${String(histogram.count)}`);
   }
 
   return lines.join('\n');

@@ -1,23 +1,68 @@
-import { buildApp } from './app.js';
-import { serverConfig } from './config/index.js';
-import { connectDatabase, disconnectDatabase } from './shared/database/index.js';
-import { connectRabbitMQ, disconnectRabbitMQ } from './shared/rabbitmq/index.js';
-import { logger } from './shared/logger/index.js';
+import { buildApp } from './app.ts';
+import { serverConfig } from './config/index.ts';
+import { connectDatabase, disconnectDatabase } from './shared/database/index.ts';
+import { connectRabbitMQ, disconnectRabbitMQ } from './shared/rabbitmq/index.ts';
+import { logger } from './shared/logger/index.ts';
+
+let isShuttingDown = false;
+let activeRequests = 0;
+
+export function incrementActiveRequests(): void {
+  activeRequests++;
+}
+
+export function decrementActiveRequests(): void {
+  activeRequests--;
+}
+
+export function getActiveRequests(): number {
+  return activeRequests;
+}
+
+export function isServerShuttingDown(): boolean {
+  return isShuttingDown;
+}
 
 async function main(): Promise<void> {
   const app = await buildApp();
+
+  // Track active requests
+  app.addHook('onRequest', () => {
+    incrementActiveRequests();
+  });
+
+  app.addHook('onResponse', () => {
+    decrementActiveRequests();
+  });
 
   await connectDatabase();
   await connectRabbitMQ();
 
   await app.listen({ port: serverConfig.port, host: '0.0.0.0' });
-  logger.info(`Server started on port ${serverConfig.port}`);
+  logger.info(`Server started on port ${String(serverConfig.port)}`);
 
-  const shutdown = async (signal: string): Promise<void> => {
+  const gracefulShutdown = async (signal: string): Promise<void> => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
     logger.info(`Received ${signal}, starting graceful shutdown`);
 
+    // Stop accepting new connections
     await app.close();
-    logger.info('HTTP server closed');
+    logger.info('HTTP server closed, no new connections accepted');
+
+    // Wait for active requests to complete (max 30s)
+    const maxWait = 30000;
+    const startTime = Date.now();
+
+    while (activeRequests > 0 && Date.now() - startTime < maxWait) {
+      logger.info(`Waiting for ${String(activeRequests)} active requests to complete`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (activeRequests > 0) {
+      logger.warn(`Force shutdown with ${String(activeRequests)} active requests`);
+    }
 
     await disconnectRabbitMQ();
     await disconnectDatabase();
@@ -26,11 +71,11 @@ async function main(): Promise<void> {
     process.exit(0);
   };
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   logger.error('Failed to start server', { error });
   process.exit(1);
 });

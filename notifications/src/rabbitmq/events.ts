@@ -1,8 +1,15 @@
 export const EXCHANGE_NAME = 'budget.events';
 export const QUEUE_NAME = 'notifications.queue';
 
-export interface TransactionCreatedEvent {
+export interface BaseEvent {
+  version: number;
+  timestamp: string;
+  correlationId?: string;
+}
+
+export interface TransactionCreatedEventV1 extends BaseEvent {
   type: 'TRANSACTION_CREATED';
+  version: 1;
   payload: {
     userId: string;
     categoryId: string;
@@ -14,8 +21,9 @@ export interface TransactionCreatedEvent {
   };
 }
 
-export interface GoalDepositEvent {
+export interface GoalDepositEventV1 extends BaseEvent {
   type: 'GOAL_DEPOSIT';
+  version: 1;
   payload: {
     userId: string;
     goalId: string;
@@ -24,5 +32,8 @@ export interface GoalDepositEvent {
     targetAmount: number;
   };
 }
+
+export type TransactionCreatedEvent = TransactionCreatedEventV1;
+export type GoalDepositEvent = GoalDepositEventV1;
 
 export type BudgetEvent = TransactionCreatedEvent | GoalDepositEvent;

@@ -1,15 +1,11 @@
-import { prisma } from '../shared/database/index.js';
-import { logger } from '../shared/logger/index.js';
+import { prisma } from '../shared/database/index.ts';
+import { logger } from '../shared/logger/index.ts';
+import type { BudgetEvent, TransactionCreatedEvent, GoalDepositEvent } from '../rabbitmq/events.ts';
 import {
-  BudgetEvent,
-  TransactionCreatedEvent,
-  GoalDepositEvent,
-} from '../rabbitmq/events.js';
-import {
-  sendMessage,
+  sendMessageWithRetry,
   formatLimitExceededMessage,
   formatGoalReachedMessage,
-} from '../telegram/telegram.service.js';
+} from '../telegram/telegram.service.ts';
 
 async function handleTransactionCreated(event: TransactionCreatedEvent): Promise<void> {
   const { userId, categoryName, currentSpent, limitAmount } = event.payload;
@@ -29,12 +25,16 @@ async function handleTransactionCreated(event: TransactionCreatedEvent): Promise
   }
 
   const message = formatLimitExceededMessage(categoryName, currentSpent, limitAmount);
-  await sendMessage({
+  const sent = await sendMessageWithRetry({
     chatId: settings.telegramChatId,
     text: message,
   });
 
-  logger.info('Limit exceeded notification sent', { userId, categoryName });
+  if (sent) {
+    logger.info('Limit exceeded notification sent', { userId, categoryName });
+  } else {
+    logger.error('Failed to send limit exceeded notification', { userId, categoryName });
+  }
 }
 
 async function handleGoalDeposit(event: GoalDepositEvent): Promise<void> {
@@ -55,20 +55,26 @@ async function handleGoalDeposit(event: GoalDepositEvent): Promise<void> {
   }
 
   const message = formatGoalReachedMessage(goalName, currentAmount, targetAmount);
-  await sendMessage({
+  const sent = await sendMessageWithRetry({
     chatId: settings.telegramChatId,
     text: message,
   });
 
-  logger.info('Goal reached notification sent', { userId, goalName });
+  if (sent) {
+    logger.info('Goal reached notification sent', { userId, goalName });
+  } else {
+    logger.error('Failed to send goal reached notification', { userId, goalName });
+  }
 }
 
 export async function handleEvent(event: BudgetEvent): Promise<void> {
   switch (event.type) {
     case 'TRANSACTION_CREATED':
+      // Currently only V1 exists, add version check when V2 is introduced
       await handleTransactionCreated(event);
       break;
     case 'GOAL_DEPOSIT':
+      // Currently only V1 exists, add version check when V2 is introduced
       await handleGoalDeposit(event);
       break;
     default:

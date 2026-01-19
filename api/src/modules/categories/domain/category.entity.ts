@@ -9,13 +9,13 @@ export interface Category {
 export interface CreateCategoryData {
   userId: string;
   name: string;
-  icon?: string;
-  isDefault?: boolean;
+  icon?: string | undefined;
+  isDefault?: boolean | undefined;
 }
 
 export interface UpdateCategoryData {
-  name?: string;
-  icon?: string;
+  name?: string | undefined;
+  icon?: string | undefined;
 }
 
 export const DEFAULT_CATEGORIES = [

@@ -1,10 +1,11 @@
 import { Prisma } from '@prisma/client';
 
 const Decimal = Prisma.Decimal;
-import { BudgetRepository } from '../domain/budget.repository.js';
-import { Budget, BudgetLimit, BudgetWithLimits } from '../domain/budget.entity.js';
-import { CategoryRepository } from '../../categories/domain/category.repository.js';
-import { logger } from '../../../shared/logger/index.js';
+import type { BudgetRepository } from '../domain/budget.repository.ts';
+import type { Budget, BudgetLimit, BudgetWithLimits } from '../domain/budget.entity.ts';
+import type { CategoryRepository } from '../../categories/domain/category.repository.ts';
+import { logger } from '../../../shared/logger/index.ts';
+import { NotFoundError } from '../../../shared/errors/index.ts';
 
 export interface CreateBudgetInput {
   month: number;
@@ -19,7 +20,7 @@ export interface SetLimitInput {
 export class BudgetService {
   constructor(
     private budgetRepository: BudgetRepository,
-    private categoryRepository: CategoryRepository
+    private categoryRepository: CategoryRepository,
   ) {}
 
   async getOrCreateBudget(userId: string, month: number, year: number): Promise<BudgetWithLimits> {
@@ -46,18 +47,18 @@ export class BudgetService {
     userId: string,
     month: number,
     year: number,
-    input: SetLimitInput
+    input: SetLimitInput,
   ): Promise<BudgetLimit> {
     const category = await this.categoryRepository.findById(input.categoryId);
     if (!category || category.userId !== userId) {
-      throw new Error('Category not found');
+      throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 
     const budget = await this.getOrCreateBudget(userId, month, year);
 
     const existingLimit = await this.budgetRepository.findLimitByBudgetAndCategory(
       budget.id,
-      input.categoryId
+      input.categoryId,
     );
 
     const limitAmount = new Decimal(input.limitAmount);
@@ -87,15 +88,20 @@ export class BudgetService {
     return created;
   }
 
-  async removeLimit(userId: string, month: number, year: number, categoryId: string): Promise<void> {
+  async removeLimit(
+    userId: string,
+    month: number,
+    year: number,
+    categoryId: string,
+  ): Promise<void> {
     const budget = await this.budgetRepository.findByUserIdAndPeriod(userId, month, year);
     if (!budget) {
-      throw new Error('Budget not found');
+      throw new NotFoundError('BUDGET_NOT_FOUND', 'Budget not found');
     }
 
     const limit = await this.budgetRepository.findLimitByBudgetAndCategory(budget.id, categoryId);
     if (!limit) {
-      throw new Error('Limit not found');
+      throw new NotFoundError('LIMIT_NOT_FOUND', 'Limit not found');
     }
 
     await this.budgetRepository.deleteLimit(limit.id);
@@ -105,7 +111,7 @@ export class BudgetService {
   async deleteBudget(userId: string, budgetId: string): Promise<void> {
     const budget = await this.budgetRepository.findById(budgetId);
     if (!budget || budget.userId !== userId) {
-      throw new Error('Budget not found');
+      throw new NotFoundError('BUDGET_NOT_FOUND', 'Budget not found');
     }
 
     await this.budgetRepository.delete(budgetId);

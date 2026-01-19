@@ -1,7 +1,7 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 type Decimal = Prisma.Decimal;
-import { Goal, CreateGoalData, UpdateGoalData } from './goal.entity.js';
+import type { Goal, CreateGoalData, UpdateGoalData } from './goal.entity.ts';
 
 export interface GoalRepository {
   findById(id: string): Promise<Goal | null>;

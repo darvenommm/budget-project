@@ -1,7 +1,7 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { AuthService } from '../application/auth.service.js';
-import { registerSchema, loginSchema, refreshSchema } from './auth.dto.js';
-import { logger } from '../../../shared/logger/index.js';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { AuthService } from '../application/auth.service.ts';
+import { registerSchema, loginSchema, refreshSchema } from './auth.dto.ts';
+import { ValidationError, UnauthorizedError } from '../../../shared/errors/index.ts';
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -9,75 +9,48 @@ export class AuthController {
   async register(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = registerSchema.safeParse(request.body);
     if (!result.success) {
-      reply.status(400).send({ error: 'Validation failed', details: result.error.flatten() });
-      return;
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
     }
 
-    try {
-      const tokens = await this.authService.register(result.data);
-      reply.status(201).send(tokens);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Email already registered') {
-        reply.status(409).send({ error: error.message });
-        return;
-      }
-      logger.error('Registration failed', { error });
-      reply.status(500).send({ error: 'Registration failed' });
-    }
+    const tokens = await this.authService.register(result.data);
+    return reply.status(201).send(tokens);
   }
 
   async login(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = loginSchema.safeParse(request.body);
     if (!result.success) {
-      reply.status(400).send({ error: 'Validation failed', details: result.error.flatten() });
-      return;
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
     }
 
-    try {
-      const tokens = await this.authService.login(result.data);
-      reply.send(tokens);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Invalid credentials') {
-        reply.status(401).send({ error: error.message });
-        return;
-      }
-      logger.error('Login failed', { error });
-      reply.status(500).send({ error: 'Login failed' });
-    }
+    const tokens = await this.authService.login(result.data);
+    return reply.send(tokens);
   }
 
   async refresh(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = refreshSchema.safeParse(request.body);
     if (!result.success) {
-      reply.status(400).send({ error: 'Validation failed', details: result.error.flatten() });
-      return;
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
     }
 
-    try {
-      const tokens = await this.authService.refresh(result.data.refreshToken);
-      reply.send(tokens);
-    } catch (error) {
-      reply.status(401).send({ error: 'Invalid refresh token' });
-    }
+    const tokens = await this.authService.refresh(result.data.refreshToken);
+    return reply.send(tokens);
   }
 
   async logout(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = refreshSchema.safeParse(request.body);
     if (!result.success) {
-      reply.status(400).send({ error: 'Validation failed', details: result.error.flatten() });
-      return;
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
     }
 
     await this.authService.logout(result.data.refreshToken);
-    reply.status(204).send();
+    return reply.status(204).send();
   }
 
-  async me(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  me(request: FastifyRequest, reply: FastifyReply): void {
     const user = (request as FastifyRequest & { user?: { id: string; email: string } }).user;
     if (!user) {
-      reply.status(401).send({ error: 'Unauthorized' });
-      return;
+      throw new UnauthorizedError('UNAUTHORIZED', 'Unauthorized');
     }
-    reply.send({ id: user.id, email: user.email });
+    void reply.send({ id: user.id, email: user.email });
   }
 }

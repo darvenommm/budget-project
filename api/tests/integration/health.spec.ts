@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { prisma } from '../../src/shared/database/index.js';
-import { isRabbitMQConnected } from '../../src/shared/rabbitmq/index.js';
-import { correlationIdMiddleware } from '../../src/shared/middleware/correlation-id.js';
+import { prisma } from '../../src/shared/database/index.ts';
+import { isRabbitMQConnected } from '../../src/shared/rabbitmq/index.ts';
+import { correlationIdMiddleware } from '../../src/shared/middleware/correlation-id.ts';
 
 describe('GET /health', () => {
   let app: FastifyInstance;

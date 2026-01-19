@@ -1,7 +1,8 @@
 import amqplib from 'amqplib';
-import { rabbitmqConfig } from '../../config/index.js';
-import { logger } from '../logger/index.js';
-import { BudgetEvent, EXCHANGE_NAME } from './events.js';
+import { rabbitmqConfig } from '../../config/index.ts';
+import { logger } from '../logger/index.ts';
+import type { BudgetEvent } from './events.ts';
+import { EXCHANGE_NAME } from './events.ts';
 
 let connection: amqplib.ChannelModel | null = null;
 let channel: amqplib.Channel | null = null;
@@ -28,15 +29,24 @@ export async function disconnectRabbitMQ(): Promise<void> {
   logger.info('RabbitMQ disconnected');
 }
 
-export async function publishEvent(event: BudgetEvent): Promise<void> {
+export function publishEvent(event: BudgetEvent): void {
   if (!channel) {
-    logger.warn('RabbitMQ channel not available, skipping event publish');
+    logger.error('RabbitMQ channel unavailable, event lost', { event });
     return;
   }
 
-  const message = Buffer.from(JSON.stringify(event));
-  channel.publish(EXCHANGE_NAME, '', message, { persistent: true });
-  logger.info('Event published', { type: event.type });
+  try {
+    channel.publish(EXCHANGE_NAME, '', Buffer.from(JSON.stringify(event)), { persistent: true });
+    logger.info('Event published', { type: event.type });
+  } catch (error) {
+    logger.error('Failed to publish event', { error, event });
+    throw error;
+  }
 }
 
-export type { BudgetEvent, TransactionCreatedEvent, GoalDepositEvent } from './events.js';
+export function isRabbitMQConnected(): boolean {
+  return connection !== null && channel !== null;
+}
+
+export type { BudgetEvent, TransactionCreatedEvent, GoalDepositEvent } from './events.ts';
+export { createTransactionCreatedEvent, createGoalDepositEvent } from './events.ts';
