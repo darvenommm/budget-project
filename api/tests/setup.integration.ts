@@ -1,18 +1,19 @@
-import { startContainers, stopContainers } from './testcontainers.js';
-import { connectDatabase, disconnectDatabase } from '../src/shared/database/index.js';
+import { connectDatabase, disconnectDatabase, prisma, pool } from '../src/shared/database/index.js';
 import { connectRabbitMQ, disconnectRabbitMQ } from '../src/shared/rabbitmq/index.js';
 
-// Set test environment
-process.env.NODE_ENV = 'test';
+// Containers are started by globalSetup.ts before tests run
+// Here we just connect to the already-running services
 
 beforeAll(async () => {
-  await startContainers();
   await connectDatabase();
   await connectRabbitMQ();
-}, 120000);
+}, 30000);
 
 afterAll(async () => {
+  // Disconnect in order: RabbitMQ first, then database
   await disconnectRabbitMQ();
   await disconnectDatabase();
-  await stopContainers();
+  // Ensure all connections are closed
+  await prisma.$disconnect();
+  await pool.end();
 });

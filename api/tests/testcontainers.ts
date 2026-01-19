@@ -26,7 +26,10 @@ export async function startContainers(): Promise<{
     .withExposedPorts(5672)
     .start();
 
-  const rabbitmqUrl = rabbitmqContainer.getAmqpUrl();
+  // Build RabbitMQ URL with credentials (guest:guest is the default)
+  const rabbitmqHost = rabbitmqContainer.getHost();
+  const rabbitmqPort = rabbitmqContainer.getMappedPort(5672);
+  const rabbitmqUrl = `amqp://guest:guest@${rabbitmqHost}:${String(rabbitmqPort)}`;
   console.log(`RabbitMQ started: ${rabbitmqUrl}`);
 
   // Set environment variables

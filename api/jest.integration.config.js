@@ -16,6 +16,9 @@ export default {
   },
   testTimeout: 120000,
   extensionsToTreatAsEsm: ['.ts'],
+  globalSetup: '<rootDir>/tests/globalSetup.ts',
+  globalTeardown: '<rootDir>/tests/globalTeardown.ts',
+  setupFiles: ['<rootDir>/tests/setup.env.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.integration.ts'],
   testMatch: ['**/tests/integration/**/*.spec.ts'],
   maxWorkers: 1, // Run sequentially to avoid container conflicts

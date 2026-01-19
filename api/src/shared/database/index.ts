@@ -3,17 +3,23 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import { logger } from '../logger/index.js';
 
-function buildDatabaseUrl(): string {
-  const host = process.env.DB_HOST ?? 'localhost';
-  const port = process.env.DB_PORT ?? '5432';
-  const user = process.env.DB_USER ?? 'budget';
-  const password = process.env.DB_PASSWORD ?? 'budget';
-  const database = 'budget_api';
+function getDatabaseUrl(): string {
+  // Prefer DATABASE_URL if set (used by tests and some deployment configs)
+  if (process.env['DATABASE_URL']) {
+    return process.env['DATABASE_URL'];
+  }
+
+  // Build URL from individual components
+  const host = process.env['DB_HOST'] ?? 'localhost';
+  const port = process.env['DB_PORT'] ?? '5432';
+  const user = process.env['DB_USER'] ?? 'budget';
+  const password = process.env['DB_PASSWORD'] ?? 'budget';
+  const database = process.env['DB_NAME'] ?? 'budget_api';
 
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
 }
 
-const pool = new pg.Pool({ connectionString: buildDatabaseUrl() });
+export const pool = new pg.Pool({ connectionString: getDatabaseUrl() });
 const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({
