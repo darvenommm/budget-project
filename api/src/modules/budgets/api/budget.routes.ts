@@ -13,32 +13,32 @@ export function budgetRoutes(app: FastifyInstance): void {
 
   app.get(
     '/api/budgets',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getAllBudgets.bind(controller),
   );
   app.get(
     '/api/budgets/current',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getBudget.bind(controller),
   );
   app.post(
     '/api/budgets/current',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getOrCreateBudget.bind(controller),
   );
   app.post(
     '/api/budgets/current/limits',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.setLimit.bind(controller),
   );
   app.delete(
     '/api/budgets/current/limits/:categoryId',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.removeLimit.bind(controller),
   );
   app.delete(
     '/api/budgets/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.deleteBudget.bind(controller),
   );
 }

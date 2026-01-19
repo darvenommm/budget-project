@@ -15,5 +15,5 @@ export function authRoutes(app: FastifyInstance): void {
   app.post('/api/auth/login', controller.login.bind(controller));
   app.post('/api/auth/refresh', controller.refresh.bind(controller));
   app.post('/api/auth/logout', controller.logout.bind(controller));
-  app.get('/api/auth/me', { preHandler: authMiddleware as never }, controller.me.bind(controller));
+  app.get('/api/auth/me', { preHandler: authMiddleware }, controller.me.bind(controller));
 }

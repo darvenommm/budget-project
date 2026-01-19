@@ -19,32 +19,32 @@ export function transactionRoutes(app: FastifyInstance): void {
 
   app.get(
     '/api/transactions',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getAll.bind(controller),
   );
   app.get(
     '/api/transactions/spending',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getMonthlySpending.bind(controller),
   );
   app.get(
     '/api/transactions/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getById.bind(controller),
   );
   app.post(
     '/api/transactions',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.create.bind(controller),
   );
   app.put(
     '/api/transactions/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.update.bind(controller),
   );
   app.delete(
     '/api/transactions/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.delete.bind(controller),
   );
 }

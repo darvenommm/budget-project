@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply, preHandlerAsyncHookHandler } from 'fastify';
 import { verifyAccessToken } from '../../modules/auth/application/jwt.service.ts';
 import { prisma } from '../database/index.ts';
 import { UnauthorizedError } from '../errors/index.ts';
@@ -30,7 +30,10 @@ declare module 'fastify' {
   }
 }
 
-export async function authMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+export const authMiddleware: preHandlerAsyncHookHandler = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> => {
   const authHeader = request.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -54,4 +57,4 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
   } catch {
     return reply.status(401).send({ error: 'Invalid token' });
   }
-}
+};

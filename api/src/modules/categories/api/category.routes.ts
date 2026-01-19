@@ -11,22 +11,22 @@ export function categoryRoutes(app: FastifyInstance): void {
 
   app.get(
     '/api/categories',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getAll.bind(controller),
   );
   app.post(
     '/api/categories',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.create.bind(controller),
   );
   app.put(
     '/api/categories/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.update.bind(controller),
   );
   app.delete(
     '/api/categories/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.delete.bind(controller),
   );
 }

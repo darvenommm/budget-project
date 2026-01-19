@@ -11,32 +11,32 @@ export function goalRoutes(app: FastifyInstance): void {
 
   app.get(
     '/api/goals',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getAll.bind(controller),
   );
   app.get<{ Params: { id: string } }>(
     '/api/goals/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.getById.bind(controller),
   );
   app.post(
     '/api/goals',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.create.bind(controller),
   );
   app.put<{ Params: { id: string } }>(
     '/api/goals/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.update.bind(controller),
   );
   app.delete<{ Params: { id: string } }>(
     '/api/goals/:id',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.delete.bind(controller),
   );
   app.post<{ Params: { id: string } }>(
     '/api/goals/:id/deposit',
-    { preHandler: authMiddleware as never },
+    { preHandler: authMiddleware },
     controller.deposit.bind(controller),
   );
 }

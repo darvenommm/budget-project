@@ -33,6 +33,14 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-exports': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: {
+            properties: false,
+          },
+        },
+      ],
     },
   },
   eslintConfigPrettier
