@@ -6,11 +6,9 @@
     "dev": "bun --watch src/main.ts",
     "build": "bun build src/main.ts --outdir dist --target bun --external @prisma/client",
     "start": "bun dist/main.js",
-    "test": "bun run test:unit && npm run test:integration",
+    "test": "bun run test:unit",
     "test:unit": "bun test tests/unit",
-    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' npx jest --config jest.integration.config.js",
     "test:cov": "bun test tests/unit --coverage",
-    "test:integration:cov": "NODE_OPTIONS='--experimental-vm-modules' npx jest --config jest.integration.config.js --coverage",
     "db:migrate": "bunx prisma migrate dev",
     "db:generate": "bunx prisma generate"
   },
@@ -29,20 +27,14 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@testcontainers/postgresql": "^10.18.0",
-    "@testcontainers/rabbitmq": "^10.18.0",
     "@types/amqplib": "^0.10.4",
-    "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^9.0.7",
     "@vitest/coverage-v8": "^4.0.17",
-    "jest": "^29.7.0",
     "prisma": "^7.2.0",
     "supertest": "^6.3.4",
-    "testcontainers": "^10.18.0",
-    "ts-jest": "^29.1.2",
     "tsx": "^4.7.0",
     "vitest": "^4.0.17"
   }

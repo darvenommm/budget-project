@@ -58,48 +58,13 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ## Task 2: Убрать eslint-disable комментарии
 
-### Task 2.1: Исправить `no-var` в globalSetup.ts
+### Task 2.1: Исправить `no-var` в globalSetup.ts ✅ DONE
 
-**Files:**
-- Modify: `api/tests/globalSetup.ts`
+**Результат:** Обнаружено, что глобальные переменные `__POSTGRES_CONTAINER__` и `__RABBITMQ_CONTAINER__` не использовались (teardown читает из config файла). Удалены неиспользуемые декларации, eslint-disable комментарии убраны.
 
-**Step 1: Прочитать файл и понять контекст**
+**Commit:** `6e79905` - refactor: remove unused global declarations from test setup
 
-Посмотреть как используются глобальные переменные.
-
-**Step 2: Заменить var на const**
-
-```typescript
-// Before:
-// eslint-disable-next-line no-var
-declare var __POSTGRES_CONTAINER__: StartedPostgreSqlContainer;
-// eslint-disable-next-line no-var
-declare var __REDIS_CONTAINER__: StartedRedisContainer;
-
-// After:
-declare const __POSTGRES_CONTAINER__: StartedPostgreSqlContainer;
-declare const __REDIS_CONTAINER__: StartedRedisContainer;
-```
-
-**Step 3: Обновить присваивание в globalSetup**
-
-Если используется `global.__POSTGRES_CONTAINER__ = ...`, нужно обновить типизацию глобального объекта.
-
-**Step 4: Проверить что тесты работают**
-
-```bash
-cd api && npm test -- --testPathPattern=integration --maxWorkers=1
-```
-
-**Step 5: Commit**
-
-```bash
-git add api/tests && git commit -m "refactor: replace var with const in test setup
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
-```
-
-### Task 2.2: Исправить тесты notifications
+### Task 2.2: Исправить тесты notifications ✅ DONE
 
 **Files:**
 - Modify: `notifications/tests/unit/handlers/goal-deposit.spec.ts`
@@ -121,6 +86,62 @@ cd notifications && bun test
 
 ```bash
 git add notifications/tests && git commit -m "refactor: fix type safety in notification tests
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+```
+
+### Task 2.3: Удалить интеграционные тесты
+
+**Причина:** Интеграционные тесты требуют Docker containers (PostgreSQL, RabbitMQ) и занимают много времени. Решено удалить их для упрощения CI/CD.
+
+**Files:**
+- Delete: `api/tests/integration/` (вся папка)
+- Delete: `api/tests/globalSetup.ts`
+- Delete: `api/tests/globalTeardown.ts`
+- Modify: `api/jest.config.ts` (убрать globalSetup/globalTeardown)
+- Modify: `api/package.json` (убрать testcontainers dependencies)
+
+**Step 1: Удалить папку интеграционных тестов**
+
+```bash
+rm -rf api/tests/integration
+```
+
+**Step 2: Удалить globalSetup.ts и globalTeardown.ts**
+
+```bash
+rm api/tests/globalSetup.ts api/tests/globalTeardown.ts
+```
+
+**Step 3: Обновить jest.config.ts**
+
+Убрать `globalSetup` и `globalTeardown` из конфига.
+
+**Step 4: Удалить testcontainers из dependencies**
+
+```bash
+cd api && npm uninstall @testcontainers/postgresql @testcontainers/rabbitmq testcontainers
+```
+
+**Step 5: Удалить config файл если существует**
+
+```bash
+rm -f api/.integration-test-config.json
+```
+
+**Step 6: Проверить что unit тесты работают**
+
+```bash
+cd api && npm test -- --testPathPattern=unit
+```
+
+**Step 7: Commit**
+
+```bash
+git add -A && git commit -m "chore: remove integration tests
+
+Integration tests required Docker containers and were slow.
+Keeping unit tests only for faster CI/CD.
 
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 ```
@@ -162,11 +183,11 @@ app.get('/api/budgets', { preHandler: authMiddleware as never }, controller.getA
 app.get('/api/budgets', { preHandler: authMiddleware }, controller.getAll.bind(controller));
 ```
 
-**Step 4: Проверить линтером и тестами**
+**Step 4: Проверить линтером и unit тестами**
 
 ```bash
 npm run lint
-cd api && npm test
+cd api && npm test -- --testPathPattern=unit
 ```
 
 **Step 5: Commit**
@@ -295,11 +316,11 @@ export function verifyAccessToken(token: string): TokenPayload {
 }
 ```
 
-**Step 4: Проверить линтером и тестами**
+**Step 4: Проверить линтером и unit тестами**
 
 ```bash
 npm run lint
-cd api && npm test
+cd api && npm test -- --testPathPattern=unit
 ```
 
 **Step 5: Commit**
@@ -373,11 +394,11 @@ const hasher = new Bun.CryptoHasher('bcrypt', { cost: BCRYPT_COST });
 
 **Step 6: Обновить telegram.service.ts и consumer.ts**
 
-**Step 7: Проверить линтером и тестами**
+**Step 7: Проверить линтером и unit тестами**
 
 ```bash
 npm run lint
-cd api && npm test
+cd api && npm test -- --testPathPattern=unit
 cd ../notifications && bun test
 ```
 
@@ -481,10 +502,10 @@ npm run lint
 grep -r "export default" api/src notifications/src || echo "No default exports found"
 ```
 
-**Step 4: Запустить все тесты**
+**Step 4: Запустить все unit тесты**
 
 ```bash
-cd api && npm test
+cd api && npm test -- --testPathPattern=unit
 cd ../notifications && bun test
 ```
 
