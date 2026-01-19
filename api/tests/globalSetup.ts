@@ -1,6 +1,4 @@
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
-import type { StartedRabbitMQContainer } from '@testcontainers/rabbitmq';
 import { RabbitMQContainer } from '@testcontainers/rabbitmq';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
@@ -20,13 +18,6 @@ async function waitForRabbitMQ(url: string, maxAttempts = 30): Promise<void> {
     }
   }
   throw new Error('RabbitMQ failed to become ready');
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __POSTGRES_CONTAINER__: StartedPostgreSqlContainer;
-  // eslint-disable-next-line no-var
-  var __RABBITMQ_CONTAINER__: StartedRabbitMQContainer;
 }
 
 export default async function globalSetup(): Promise<void> {
@@ -79,10 +70,6 @@ export default async function globalSetup(): Promise<void> {
 
   const configPath = path.join(process.cwd(), '.integration-test-config.json');
   fs.writeFileSync(configPath, JSON.stringify(envConfig, null, 2));
-
-  // Store containers globally for teardown
-  global.__POSTGRES_CONTAINER__ = postgresContainer;
-  global.__RABBITMQ_CONTAINER__ = rabbitmqContainer;
 
   console.log('Global setup complete');
 }
