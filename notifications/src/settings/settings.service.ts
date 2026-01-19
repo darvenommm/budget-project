@@ -8,11 +8,9 @@ export class SettingsService {
       where: { userId },
     });
 
-    if (!settings) {
-      settings = await prisma.notificationSettings.create({
-        data: { userId },
-      });
-    }
+    settings ??= await prisma.notificationSettings.create({
+      data: { userId },
+    });
 
     return settings;
   }

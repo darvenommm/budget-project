@@ -60,7 +60,7 @@ export class TransactionService {
 
   async getById(userId: string, transactionId: string): Promise<Transaction> {
     const transaction = await this.transactionRepository.findById(transactionId);
-    if (!transaction || transaction.userId !== userId) {
+    if (transaction?.userId !== userId) {
       throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
     return transaction;
@@ -68,7 +68,7 @@ export class TransactionService {
 
   async create(userId: string, input: CreateTransactionInput): Promise<Transaction> {
     const category = await this.categoryRepository.findById(input.categoryId);
-    if (!category || category.userId !== userId) {
+    if (category?.userId !== userId) {
       throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 
@@ -97,13 +97,13 @@ export class TransactionService {
     input: UpdateTransactionInput,
   ): Promise<Transaction> {
     const existing = await this.transactionRepository.findById(transactionId);
-    if (!existing || existing.userId !== userId) {
+    if (existing?.userId !== userId) {
       throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
 
     if (input.categoryId) {
       const category = await this.categoryRepository.findById(input.categoryId);
-      if (!category || category.userId !== userId) {
+      if (category?.userId !== userId) {
         throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
       }
     }
@@ -124,7 +124,7 @@ export class TransactionService {
 
   async delete(userId: string, transactionId: string): Promise<void> {
     const transaction = await this.transactionRepository.findById(transactionId);
-    if (!transaction || transaction.userId !== userId) {
+    if (transaction?.userId !== userId) {
       throw new NotFoundError('TRANSACTION_NOT_FOUND', 'Transaction not found');
     }
 

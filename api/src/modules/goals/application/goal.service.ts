@@ -28,7 +28,7 @@ export class GoalService {
 
   async getById(userId: string, goalId: string): Promise<Goal> {
     const goal = await this.goalRepository.findById(goalId);
-    if (!goal || goal.userId !== userId) {
+    if (goal?.userId !== userId) {
       throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
     return goal;
@@ -50,7 +50,7 @@ export class GoalService {
 
   async update(userId: string, goalId: string, input: UpdateGoalInput): Promise<Goal> {
     const existing = await this.goalRepository.findById(goalId);
-    if (!existing || existing.userId !== userId) {
+    if (existing?.userId !== userId) {
       throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 
@@ -69,7 +69,7 @@ export class GoalService {
 
   async delete(userId: string, goalId: string): Promise<void> {
     const goal = await this.goalRepository.findById(goalId);
-    if (!goal || goal.userId !== userId) {
+    if (goal?.userId !== userId) {
       throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 
@@ -79,7 +79,7 @@ export class GoalService {
 
   async deposit(userId: string, goalId: string, amount: number): Promise<Goal> {
     const existing = await this.goalRepository.findById(goalId);
-    if (!existing || existing.userId !== userId) {
+    if (existing?.userId !== userId) {
       throw new NotFoundError('GOAL_NOT_FOUND', 'Goal not found');
     }
 

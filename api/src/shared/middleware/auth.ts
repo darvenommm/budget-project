@@ -50,7 +50,7 @@ export const authMiddleware: preHandlerAsyncHookHandler = async (
     });
 
     if (!user) {
-      return reply.status(401).send({ error: 'User not found' });
+      return await reply.status(401).send({ error: 'User not found' });
     }
 
     request.user = user;

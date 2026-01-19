@@ -46,7 +46,7 @@ export class CategoryService {
 
   async update(userId: string, categoryId: string, data: UpdateCategoryData): Promise<Category> {
     const category = await this.categoryRepository.findById(categoryId);
-    if (!category || category.userId !== userId) {
+    if (category?.userId !== userId) {
       throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 
@@ -64,7 +64,7 @@ export class CategoryService {
 
   async delete(userId: string, categoryId: string): Promise<void> {
     const category = await this.categoryRepository.findById(categoryId);
-    if (!category || category.userId !== userId) {
+    if (category?.userId !== userId) {
       throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 

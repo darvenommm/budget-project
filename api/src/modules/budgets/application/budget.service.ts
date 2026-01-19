@@ -50,7 +50,7 @@ export class BudgetService {
     input: SetLimitInput,
   ): Promise<BudgetLimit> {
     const category = await this.categoryRepository.findById(input.categoryId);
-    if (!category || category.userId !== userId) {
+    if (category?.userId !== userId) {
       throw new NotFoundError('CATEGORY_NOT_FOUND', 'Category not found');
     }
 
@@ -110,7 +110,7 @@ export class BudgetService {
 
   async deleteBudget(userId: string, budgetId: string): Promise<void> {
     const budget = await this.budgetRepository.findById(budgetId);
-    if (!budget || budget.userId !== userId) {
+    if (budget?.userId !== userId) {
       throw new NotFoundError('BUDGET_NOT_FOUND', 'Budget not found');
     }
 

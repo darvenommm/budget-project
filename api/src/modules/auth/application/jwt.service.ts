@@ -28,7 +28,7 @@ export interface TokenPair {
 }
 
 function parseExpiresIn(value: string): number {
-  const match = value.match(/^(\d+)([smhd])$/);
+  const match = /^(\d+)([smhd])$/.exec(value);
   if (!match?.[1] || !match[2]) {
     return DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS;
   }
@@ -75,7 +75,7 @@ export function generateTokenPair(userId: string): TokenPair {
 }
 
 export function getRefreshTokenExpiry(): Date {
-  const match = jwtConfig.refreshExpiresIn.match(/^(\d+)([dhms])$/);
+  const match = /^(\d+)([dhms])$/.exec(jwtConfig.refreshExpiresIn);
   if (!match?.[1] || !match[2]) {
     return new Date(Date.now() + DEFAULT_REFRESH_TOKEN_EXPIRY_DAYS * TIME_MULTIPLIERS_MS.d);
   }

@@ -7,6 +7,7 @@ import type {
   RefreshToken,
 } from '../../src/modules/auth/infrastructure/token.repository.prisma.ts';
 import type { User } from '../../src/modules/auth/domain/user.entity.ts';
+import type { CategoryService } from '../../src/modules/categories/application/category.service.ts';
 
 // Helper for testing async rejections (Bun test types don't properly type expect().rejects as Promise)
 async function expectToRejectWith(promise: Promise<unknown>, message: string): Promise<void> {
@@ -61,6 +62,12 @@ describe('AuthService', () => {
     deleteAllUserTokens: deleteAllUserTokensMock,
   };
 
+  const createDefaultCategoriesMock = mock(() => Promise.resolve());
+
+  const mockCategoryService = {
+    createDefaultCategories: createDefaultCategoriesMock,
+  } as unknown as CategoryService;
+
   let authService: AuthService;
 
   beforeEach(() => {
@@ -71,7 +78,8 @@ describe('AuthService', () => {
     findRefreshTokenMock.mockReset();
     deleteRefreshTokenMock.mockReset();
     deleteAllUserTokensMock.mockReset();
-    authService = new AuthService(mockUserRepository, mockTokenRepository);
+    createDefaultCategoriesMock.mockReset();
+    authService = new AuthService(mockUserRepository, mockTokenRepository, mockCategoryService);
   });
 
   describe('register', () => {
