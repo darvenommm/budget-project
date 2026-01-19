@@ -1,5 +1,5 @@
 import { mock } from 'bun:test';
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
 
 interface MockRequestOptions<TBody = unknown, TParams = unknown, TQuery = unknown> {
   body?: TBody;
@@ -8,15 +8,18 @@ interface MockRequestOptions<TBody = unknown, TParams = unknown, TQuery = unknow
   user?: { id: string; email?: string };
 }
 
-export function createMockRequest<TBody = unknown, TParams = unknown, TQuery = unknown>(
-  options: MockRequestOptions<TBody, TParams, TQuery> = {},
-): FastifyRequest {
+export function createMockRequest<
+  TRoute extends RouteGenericInterface = RouteGenericInterface,
+  TBody = unknown,
+  TParams = unknown,
+  TQuery = unknown,
+>(options: MockRequestOptions<TBody, TParams, TQuery> = {}): FastifyRequest<TRoute> {
   return {
     body: options.body ?? {},
     params: options.params ?? {},
     query: options.query ?? {},
     user: options.user,
-  } as FastifyRequest;
+  } as FastifyRequest<TRoute>;
 }
 
 interface MockReplyMethods {

@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { GoalController } from '../../../src/modules/goals/api/goal.controller.ts';
 import type { GoalService } from '../../../src/modules/goals/application/goal.service.ts';
-import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
+import {
+  createMockRequest,
+  createMockReply,
+  expectToReject,
+} from '../../helpers/mock-factories.ts';
 
 describe('GoalController', () => {
   let controller: GoalController;
@@ -65,7 +69,7 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000, currentAmount: 1000 };
       mockService.getById.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
       });
@@ -158,7 +162,7 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Trip to Japan', targetAmount: 7000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Trip to Japan', targetAmount: 7000 },
@@ -178,7 +182,7 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Trip to Japan', targetAmount: 5000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { name: 'Trip to Japan' },
@@ -197,7 +201,7 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000 };
       mockService.update.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: {},
@@ -217,7 +221,7 @@ describe('GoalController', () => {
     it('should delete goal and return 204', async () => {
       mockService.delete.mockImplementation(() => Promise.resolve());
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
       });
@@ -237,7 +241,7 @@ describe('GoalController', () => {
       const goal = { id: 'goal-1', name: 'Vacation', targetAmount: 5000, currentAmount: 1500 };
       mockService.deposit.mockImplementation(() => Promise.resolve(goal));
 
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: 500 },
@@ -254,7 +258,7 @@ describe('GoalController', () => {
     });
 
     it('should throw ValidationError for missing amount', async () => {
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: {},
@@ -264,7 +268,7 @@ describe('GoalController', () => {
     });
 
     it('should throw ValidationError for negative amount', async () => {
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: -100 },
@@ -274,7 +278,7 @@ describe('GoalController', () => {
     });
 
     it('should throw ValidationError for zero amount', async () => {
-      const mockRequest = createMockRequest({
+      const mockRequest = createMockRequest<{ Params: { id: string } }>({
         user: { id: 'user-id' },
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
         body: { amount: 0 },

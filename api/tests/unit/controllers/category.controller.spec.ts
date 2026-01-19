@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { CategoryController } from '../../../src/modules/categories/api/category.controller.ts';
 import type { CategoryService } from '../../../src/modules/categories/application/category.service.ts';
-import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
+import {
+  createMockRequest,
+  createMockReply,
+  expectToReject,
+} from '../../helpers/mock-factories.ts';
 
 describe('CategoryController', () => {
   let controller: CategoryController;

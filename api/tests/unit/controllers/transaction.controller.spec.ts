@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { TransactionController } from '../../../src/modules/transactions/api/transaction.controller.ts';
 import type { TransactionService } from '../../../src/modules/transactions/application/transaction.service.ts';
-import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
+import {
+  createMockRequest,
+  createMockReply,
+  expectToReject,
+} from '../../helpers/mock-factories.ts';
 
 describe('TransactionController', () => {
   let controller: TransactionController;

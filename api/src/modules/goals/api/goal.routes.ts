@@ -9,21 +9,13 @@ export function goalRoutes(app: FastifyInstance): void {
   const goalService = new GoalService(goalRepository);
   const controller = new GoalController(goalService);
 
-  app.get(
-    '/api/goals',
-    { preHandler: authMiddleware },
-    controller.getAll.bind(controller),
-  );
+  app.get('/api/goals', { preHandler: authMiddleware }, controller.getAll.bind(controller));
   app.get<{ Params: { id: string } }>(
     '/api/goals/:id',
     { preHandler: authMiddleware },
     controller.getById.bind(controller),
   );
-  app.post(
-    '/api/goals',
-    { preHandler: authMiddleware },
-    controller.create.bind(controller),
-  );
+  app.post('/api/goals', { preHandler: authMiddleware }, controller.create.bind(controller));
   app.put<{ Params: { id: string } }>(
     '/api/goals/:id',
     { preHandler: authMiddleware },

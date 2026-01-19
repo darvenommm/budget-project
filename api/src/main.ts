@@ -3,7 +3,10 @@ import { serverConfig } from './config/index.ts';
 import { connectDatabase, disconnectDatabase } from './shared/database/index.ts';
 import { connectRabbitMQ, disconnectRabbitMQ } from './shared/rabbitmq/index.ts';
 import { logger } from './shared/logger/index.ts';
-import { GRACEFUL_SHUTDOWN_TIMEOUT_MS, SHUTDOWN_POLL_INTERVAL_MS } from './shared/constants/index.ts';
+import {
+  GRACEFUL_SHUTDOWN_TIMEOUT_MS,
+  SHUTDOWN_POLL_INTERVAL_MS,
+} from './shared/constants/index.ts';
 
 let isShuttingDown = false;
 let activeRequests = 0;
@@ -28,12 +31,14 @@ async function main(): Promise<void> {
   const app = await buildApp();
 
   // Track active requests
-  app.addHook('onRequest', () => {
+  app.addHook('onRequest', (_request, _reply, done) => {
     incrementActiveRequests();
+    done();
   });
 
-  app.addHook('onResponse', () => {
+  app.addHook('onResponse', (_request, _reply, done) => {
     decrementActiveRequests();
+    done();
   });
 
   await connectDatabase();

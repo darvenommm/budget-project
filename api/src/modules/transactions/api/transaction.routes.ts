@@ -17,11 +17,7 @@ export function transactionRoutes(app: FastifyInstance): void {
   );
   const controller = new TransactionController(transactionService);
 
-  app.get(
-    '/api/transactions',
-    { preHandler: authMiddleware },
-    controller.getAll.bind(controller),
-  );
+  app.get('/api/transactions', { preHandler: authMiddleware }, controller.getAll.bind(controller));
   app.get(
     '/api/transactions/spending',
     { preHandler: authMiddleware },
@@ -32,11 +28,7 @@ export function transactionRoutes(app: FastifyInstance): void {
     { preHandler: authMiddleware },
     controller.getById.bind(controller),
   );
-  app.post(
-    '/api/transactions',
-    { preHandler: authMiddleware },
-    controller.create.bind(controller),
-  );
+  app.post('/api/transactions', { preHandler: authMiddleware }, controller.create.bind(controller));
   app.put(
     '/api/transactions/:id',
     { preHandler: authMiddleware },

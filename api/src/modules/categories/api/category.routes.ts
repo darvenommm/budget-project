@@ -9,16 +9,8 @@ export function categoryRoutes(app: FastifyInstance): void {
   const categoryService = new CategoryService(categoryRepository);
   const controller = new CategoryController(categoryService);
 
-  app.get(
-    '/api/categories',
-    { preHandler: authMiddleware },
-    controller.getAll.bind(controller),
-  );
-  app.post(
-    '/api/categories',
-    { preHandler: authMiddleware },
-    controller.create.bind(controller),
-  );
+  app.get('/api/categories', { preHandler: authMiddleware }, controller.getAll.bind(controller));
+  app.post('/api/categories', { preHandler: authMiddleware }, controller.create.bind(controller));
   app.put(
     '/api/categories/:id',
     { preHandler: authMiddleware },

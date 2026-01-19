@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { BudgetController } from '../../../src/modules/budgets/api/budget.controller.ts';
 import type { BudgetService } from '../../../src/modules/budgets/application/budget.service.ts';
-import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
+import {
+  createMockRequest,
+  createMockReply,
+  expectToReject,
+} from '../../helpers/mock-factories.ts';
 
 describe('BudgetController', () => {
   let controller: BudgetController;

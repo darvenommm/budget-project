@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from 'fastify';
 
 interface Metrics {
   totalRequests: number;
@@ -14,11 +14,20 @@ const metrics: Metrics = {
   requests5xx: 0,
 };
 
-export function requestCounterOnRequest(): void {
+export function requestCounterOnRequest(
+  _request: FastifyRequest,
+  _reply: FastifyReply,
+  done: HookHandlerDoneFunction,
+): void {
   metrics.totalRequests++;
+  done();
 }
 
-export function requestCounterOnResponse(_request: FastifyRequest, reply: FastifyReply): void {
+export function requestCounterOnResponse(
+  _request: FastifyRequest,
+  reply: FastifyReply,
+  done: HookHandlerDoneFunction,
+): void {
   const statusCode = reply.statusCode;
 
   if (statusCode >= 200 && statusCode < 300) {
@@ -28,6 +37,7 @@ export function requestCounterOnResponse(_request: FastifyRequest, reply: Fastif
   } else if (statusCode >= 500) {
     metrics.requests5xx++;
   }
+  done();
 }
 
 export function getMetrics(): Metrics {

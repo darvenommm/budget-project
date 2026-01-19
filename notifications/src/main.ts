@@ -11,7 +11,10 @@ import { connectDatabase, disconnectDatabase, prisma } from './shared/database/i
 import { handleEvent } from './handlers/index.ts';
 import { logger } from './shared/logger/index.ts';
 import { settingsRoutes } from './settings/index.ts';
-import { GRACEFUL_SHUTDOWN_TIMEOUT_MS, SHUTDOWN_POLL_INTERVAL_MS } from './shared/constants/index.ts';
+import {
+  GRACEFUL_SHUTDOWN_TIMEOUT_MS,
+  SHUTDOWN_POLL_INTERVAL_MS,
+} from './shared/constants/index.ts';
 
 let isShuttingDown = false;
 let activeHandlers = 0;

@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { AuthController } from '../../../src/modules/auth/api/auth.controller.ts';
 import type { AuthService } from '../../../src/modules/auth/application/auth.service.ts';
-import { createMockRequest, createMockReply, expectToReject } from '../../helpers/mock-factories.ts';
+import {
+  createMockRequest,
+  createMockReply,
+  expectToReject,
+} from '../../helpers/mock-factories.ts';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -163,9 +167,7 @@ describe('AuthController', () => {
     });
 
     it('should throw UnauthorizedError when no user', () => {
-      const mockRequest = createMockRequest({
-        user: undefined,
-      });
+      const mockRequest = createMockRequest({});
 
       expect(() => {
         controller.me(mockRequest, mockReply);
