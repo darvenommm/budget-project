@@ -1,7 +1,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { AuthService } from '../application/auth.service.ts';
 import { registerSchema, loginSchema, refreshSchema } from './auth.dto.ts';
-import { ValidationError, UnauthorizedError } from '../../../shared/errors/index.ts';
+import { ValidationError } from '../../../shared/errors/index.ts';
+import { getAuthenticatedUser } from '../../../shared/middleware/auth.ts';
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -47,10 +48,7 @@ export class AuthController {
   }
 
   me(request: FastifyRequest, reply: FastifyReply): void {
-    const user = (request as FastifyRequest & { user?: { id: string; email: string } }).user;
-    if (!user) {
-      throw new UnauthorizedError('UNAUTHORIZED', 'Unauthorized');
-    }
+    const user = getAuthenticatedUser(request);
     void reply.send({ id: user.id, email: user.email });
   }
 }
