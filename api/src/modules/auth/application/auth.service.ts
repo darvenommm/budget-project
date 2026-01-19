@@ -1,5 +1,6 @@
 import type { UserRepository } from '../domain/user.repository.ts';
 import type { TokenRepository } from '../infrastructure/token.repository.prisma.ts';
+import type { CategoryService } from '../../categories/application/category.service.ts';
 import { hashPassword, verifyPassword } from './password.service.ts';
 import type { TokenPair } from './jwt.service.ts';
 import { generateTokenPair, verifyRefreshToken, getRefreshTokenExpiry } from './jwt.service.ts';
@@ -20,6 +21,7 @@ export class AuthService {
   constructor(
     private userRepository: UserRepository,
     private tokenRepository: TokenRepository,
+    private categoryService: CategoryService,
   ) {}
 
   async register(input: RegisterInput): Promise<TokenPair> {
@@ -34,6 +36,7 @@ export class AuthService {
       passwordHash,
     });
 
+    await this.categoryService.createDefaultCategories(user.id);
     logger.info('User registered', { userId: user.id, email: user.email });
 
     const tokens = generateTokenPair(user.id);

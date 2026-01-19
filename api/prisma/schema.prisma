@@ -12,7 +12,7 @@ model User {
   email        String   @unique
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
   refreshTokens RefreshToken[]
   categories    Category[]
@@ -58,7 +58,7 @@ model Budget {
   month     Int
   year      Int
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   limits BudgetLimit[]
@@ -111,7 +111,7 @@ model Goal {
   currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(12, 2)
   deadline      DateTime? @db.Date
   createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

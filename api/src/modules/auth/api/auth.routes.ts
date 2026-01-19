@@ -3,12 +3,16 @@ import { AuthController } from './auth.controller.ts';
 import { AuthService } from '../application/auth.service.ts';
 import { PrismaUserRepository } from '../infrastructure/user.repository.prisma.ts';
 import { PrismaTokenRepository } from '../infrastructure/token.repository.prisma.ts';
+import { CategoryService } from '../../categories/application/category.service.ts';
+import { PrismaCategoryRepository } from '../../categories/infrastructure/category.repository.prisma.ts';
 import { authMiddleware } from '../../../shared/middleware/auth.ts';
 
 export function authRoutes(app: FastifyInstance): void {
   const userRepository = new PrismaUserRepository();
   const tokenRepository = new PrismaTokenRepository();
-  const authService = new AuthService(userRepository, tokenRepository);
+  const categoryRepository = new PrismaCategoryRepository();
+  const categoryService = new CategoryService(categoryRepository);
+  const authService = new AuthService(userRepository, tokenRepository, categoryService);
   const controller = new AuthController(authService);
 
   app.post('/api/auth/register', controller.register.bind(controller));
