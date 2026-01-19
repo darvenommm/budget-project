@@ -11,6 +11,7 @@ import { connectDatabase, disconnectDatabase, prisma } from './shared/database/i
 import { handleEvent } from './handlers/index.ts';
 import { logger } from './shared/logger/index.ts';
 import { settingsRoutes } from './settings/index.ts';
+import { GRACEFUL_SHUTDOWN_TIMEOUT_MS, SHUTDOWN_POLL_INTERVAL_MS } from './shared/constants/index.ts';
 
 let isShuttingDown = false;
 let activeHandlers = 0;
@@ -74,13 +75,12 @@ async function main(): Promise<void> {
     // Stop accepting new messages
     await stopConsumer();
 
-    // Wait for active handlers to complete (max 30s)
-    const maxWait = 30000;
+    // Wait for active handlers to complete
     const startTime = Date.now();
 
-    while (activeHandlers > 0 && Date.now() - startTime < maxWait) {
+    while (activeHandlers > 0 && Date.now() - startTime < GRACEFUL_SHUTDOWN_TIMEOUT_MS) {
       logger.info(`Waiting for ${String(activeHandlers)} active handlers to complete`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, SHUTDOWN_POLL_INTERVAL_MS));
     }
 
     if (activeHandlers > 0) {

@@ -4,10 +4,9 @@ import { rabbitmqConfig } from '../config/index.ts';
 import { logger } from '../shared/logger/index.ts';
 import type { BudgetEvent } from './events.ts';
 import { EXCHANGE_NAME, QUEUE_NAME } from './events.ts';
+import { HANDLER_TIMEOUT_MS } from '../shared/constants/index.ts';
 
 export type EventHandler = (event: BudgetEvent) => Promise<void>;
-
-const HANDLER_TIMEOUT = 30000;
 
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
@@ -33,7 +32,7 @@ async function handleMessage(msg: ConsumeMessage | null): Promise<void> {
       new Promise((_, reject) =>
         setTimeout(() => {
           reject(new Error('Handler timeout'));
-        }, HANDLER_TIMEOUT),
+        }, HANDLER_TIMEOUT_MS),
       ),
     ]);
 

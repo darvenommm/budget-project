@@ -1,5 +1,6 @@
 import { telegramConfig } from '../config/index.ts';
 import { logger } from '../shared/logger/index.ts';
+import { TELEGRAM_RETRY_BASE_MS } from '../shared/constants/index.ts';
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org/bot';
 
@@ -68,7 +69,7 @@ export async function sendMessageWithRetry(
     if (success) return true;
 
     if (attempt < maxRetries) {
-      const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      const delay = Math.pow(2, attempt) * TELEGRAM_RETRY_BASE_MS;
       logger.warn(`Telegram send failed, retrying in ${String(delay)}ms`, {
         attempt,
         chatId: options.chatId,

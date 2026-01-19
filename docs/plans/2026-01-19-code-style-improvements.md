@@ -90,9 +90,13 @@ git add notifications/tests && git commit -m "refactor: fix type safety in notif
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 ```
 
-### Task 2.3: Удалить интеграционные тесты
+### Task 2.3: Удалить интеграционные тесты ✅ DONE
 
 **Причина:** Интеграционные тесты требуют Docker containers (PostgreSQL, RabbitMQ) и занимают много времени. Решено удалить их для упрощения CI/CD.
+
+**Результат:** Удалены integration тесты, jest конфиги, testcontainers зависимости. Unit тесты работают.
+
+**Commit:** `1e507af` - chore: remove integration tests
 
 **Files:**
 - Delete: `api/tests/integration/` (вся папка)
