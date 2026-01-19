@@ -208,8 +208,7 @@ describe('handleGoalDeposit', () => {
       payload: {},
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    await handleEvent(unknownEvent as any);
+    await handleEvent(unknownEvent as unknown as GoalDepositEventV1);
     expect(mockPrismaNotificationSettings.findUnique).not.toHaveBeenCalled();
   });
 });
