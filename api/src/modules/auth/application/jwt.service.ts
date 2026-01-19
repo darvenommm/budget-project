@@ -3,6 +3,17 @@ import { jwtConfig } from '../../../config/index.ts';
 
 export interface TokenPayload {
   userId: string;
+  iat?: number;
+  exp?: number;
+}
+
+function isTokenPayload(payload: unknown): payload is TokenPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'userId' in payload &&
+    typeof (payload as TokenPayload).userId === 'string'
+  );
 }
 
 export interface TokenPair {
@@ -42,11 +53,19 @@ export function generateRefreshToken(payload: TokenPayload): string {
 }
 
 export function verifyAccessToken(token: string): TokenPayload {
-  return jwt.verify(token, jwtConfig.accessSecret) as TokenPayload;
+  const decoded = jwt.verify(token, jwtConfig.accessSecret);
+  if (!isTokenPayload(decoded)) {
+    throw new Error('Invalid token payload');
+  }
+  return decoded;
 }
 
 export function verifyRefreshToken(token: string): TokenPayload {
-  return jwt.verify(token, jwtConfig.refreshSecret) as TokenPayload;
+  const decoded = jwt.verify(token, jwtConfig.refreshSecret);
+  if (!isTokenPayload(decoded)) {
+    throw new Error('Invalid token payload');
+  }
+  return decoded;
 }
 
 export function generateTokenPair(userId: string): TokenPair {
