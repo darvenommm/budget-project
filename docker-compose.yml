@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgres-api:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     ports:
       - '5432:5432'
     environment:
@@ -10,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-budget}
       POSTGRES_DB: budget_api
     volumes:
-      - postgres_api_data:/var/lib/postgresql/data
+      - postgres_api_data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-budget} -d budget_api']
       interval: 5s
@@ -25,7 +23,7 @@ services:
       - internal
 
   postgres-notifications:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     ports:
       - '5433:5432'
     environment:
@@ -33,7 +31,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-budget}
       POSTGRES_DB: budget_notifications
     volumes:
-      - postgres_notifications_data:/var/lib/postgresql/data
+      - postgres_notifications_data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-budget} -d budget_notifications']
       interval: 5s
@@ -48,7 +46,7 @@ services:
       - internal
 
   rabbitmq:
-    image: rabbitmq:4-alpine
+    image: rabbitmq:4.2-alpine
     ports:
       - '5673:5672'
     environment:
@@ -109,6 +107,10 @@ services:
     user: '1001:1001'
     environment:
       DATABASE_URL: postgresql://${DB_USER:-budget}:${DB_PASSWORD:-budget}@postgres-notifications:5432/budget_notifications
+      DB_HOST: postgres-notifications
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-budget}
+      DB_PASSWORD: ${DB_PASSWORD:-budget}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-budget}:${RABBITMQ_PASSWORD:-budget}@rabbitmq:5672
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}

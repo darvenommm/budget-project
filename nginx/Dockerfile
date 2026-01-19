@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 COPY nginx.conf /etc/nginx/nginx.conf
 RUN chown -R appuser:appgroup /var/cache/nginx /var/run /var/log/nginx

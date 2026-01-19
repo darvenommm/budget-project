@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgres-api:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: budget-postgres-api-prod
     restart: unless-stopped
     environment:
@@ -10,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: budget_api
     volumes:
-      - postgres_api_data:/var/lib/postgresql/data
+      - postgres_api_data:/var/lib/postgresql
     networks:
       - backend
     healthcheck:
@@ -26,7 +24,7 @@ services:
           memory: 512M
 
   postgres-notifications:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: budget-postgres-notifications-prod
     restart: unless-stopped
     environment:
@@ -34,7 +32,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: budget_notifications
     volumes:
-      - postgres_notifications_data:/var/lib/postgresql/data
+      - postgres_notifications_data:/var/lib/postgresql
     networks:
       - backend
     healthcheck:
@@ -50,7 +48,7 @@ services:
           memory: 256M
 
   rabbitmq:
-    image: rabbitmq:4-alpine
+    image: rabbitmq:4.2-alpine
     container_name: budget-rabbitmq-prod
     restart: unless-stopped
     environment:
@@ -118,6 +116,10 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres-notifications:5432/budget_notifications
+      DB_HOST: postgres-notifications
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}

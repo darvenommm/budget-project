@@ -1,5 +1,5 @@
 # Build stage
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN bun run build
 RUN bunx prisma generate
 
 # Production stage
-FROM oven/bun:1-alpine
+FROM oven/bun:1.3-alpine
 RUN apk add --no-cache openssl
 RUN addgroup -g 1001 appgroup && adduser -u 1001 -G appgroup -s /bin/sh -D appuser
 WORKDIR /app
