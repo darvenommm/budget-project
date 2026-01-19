@@ -12,7 +12,7 @@ import {
 } from './shared/middleware/request-counter.ts';
 import { formatHistogramMetrics } from './shared/decorators/latency-histogram.ts';
 import { logger } from './shared/logger/index.ts';
-import { prisma } from './shared/database/index.ts';
+import { pool } from './shared/database/index.ts';
 import { isRabbitMQConnected } from './shared/rabbitmq/index.ts';
 import { authRoutes } from './modules/auth/api/auth.routes.ts';
 import { categoryRoutes } from './modules/categories/api/category.routes.ts';
@@ -74,7 +74,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.get('/health', async (_request, reply) => {
     const checks = {
       rabbitmq: isRabbitMQConnected(),
-      database: await prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
+      database: await pool.query('SELECT 1').then(() => true).catch(() => false),
     };
 
     const healthy = Object.values(checks).every(Boolean);

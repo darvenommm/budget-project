@@ -7,7 +7,7 @@ import {
   isRabbitMQConnected,
   stopConsumer,
 } from './rabbitmq/consumer.ts';
-import { connectDatabase, disconnectDatabase, prisma } from './shared/database/index.ts';
+import { connectDatabase, disconnectDatabase, pool } from './shared/database/index.ts';
 import { handleEvent } from './handlers/index.ts';
 import { logger } from './shared/logger/index.ts';
 import { settingsRoutes } from './settings/index.ts';
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   app.get('/health', async (_request, reply) => {
     const checks = {
       rabbitmq: isRabbitMQConnected(),
-      database: await prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
+      database: await pool.query('SELECT 1').then(() => true).catch(() => false),
     };
 
     const healthy = Object.values(checks).every(Boolean);

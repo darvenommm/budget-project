@@ -13,7 +13,7 @@ function buildDatabaseUrl(): string {
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
 }
 
-const pool = new pg.Pool({ connectionString: buildDatabaseUrl() });
+export const pool = new pg.Pool({ connectionString: buildDatabaseUrl() });
 const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({
