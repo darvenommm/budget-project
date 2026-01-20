@@ -134,6 +134,7 @@ Authorization: Bearer <access_token>
 | POST | `/auth/login` | Авторизация |
 | POST | `/auth/refresh` | Обновление токенов |
 | POST | `/auth/logout` | Выход |
+| GET | `/auth/me` | Текущий пользователь |
 
 #### Transactions
 
@@ -144,6 +145,7 @@ Authorization: Bearer <access_token>
 | POST | `/transactions` | Создать транзакцию |
 | PUT | `/transactions/:id` | Обновить транзакцию |
 | DELETE | `/transactions/:id` | Удалить транзакцию |
+| GET | `/transactions/spending` | Расходы по категориям за месяц |
 
 #### Budgets
 
