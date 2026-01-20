@@ -6,16 +6,16 @@ export const getBudgetQuerySchema = z.object({
 });
 
 export const setLimitSchema = z.object({
-  categoryId: z.string().uuid(),
+  categoryId: z.uuid(),
   limitAmount: z.number().positive(),
 });
 
 export const removeLimitParamsSchema = z.object({
-  categoryId: z.string().uuid(),
+  categoryId: z.uuid(),
 });
 
 export const deleteBudgetParamsSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 });
 
 export type GetBudgetQuery = z.infer<typeof getBudgetQuerySchema>;

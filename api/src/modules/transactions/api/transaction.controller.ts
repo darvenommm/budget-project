@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { TransactionService } from '../application/transaction.service.ts';
 import {
   createTransactionSchema,
@@ -18,7 +19,7 @@ export class TransactionController {
     const result = transactionFilterSchema.safeParse(request.query);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const transactions = await this.transactionService.getAll(userId, result.data);
@@ -33,7 +34,7 @@ export class TransactionController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
@@ -47,7 +48,7 @@ export class TransactionController {
     const result = createTransactionSchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const transaction = await this.transactionService.create(userId, result.data);
@@ -62,7 +63,7 @@ export class TransactionController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
@@ -70,7 +71,7 @@ export class TransactionController {
     const result = updateTransactionSchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const transaction = await this.transactionService.update(userId, transactionId, result.data);
@@ -85,7 +86,7 @@ export class TransactionController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
@@ -99,7 +100,7 @@ export class TransactionController {
     const result = monthlySpendingSchema.safeParse(request.query);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const spending = await this.transactionService.getMonthlySpending(

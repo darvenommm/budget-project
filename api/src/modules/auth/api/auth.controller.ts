@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { AuthService } from '../application/auth.service.ts';
 import { registerSchema, loginSchema, refreshSchema } from './auth.dto.ts';
 import { ValidationError } from '../../../shared/errors/index.ts';
@@ -10,7 +11,7 @@ export class AuthController {
   async register(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = registerSchema.safeParse(request.body);
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const tokens = await this.authService.register(result.data);
@@ -20,7 +21,7 @@ export class AuthController {
   async login(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = loginSchema.safeParse(request.body);
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const tokens = await this.authService.login(result.data);
@@ -30,7 +31,7 @@ export class AuthController {
   async refresh(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = refreshSchema.safeParse(request.body);
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const tokens = await this.authService.refresh(result.data.refreshToken);
@@ -40,7 +41,7 @@ export class AuthController {
   async logout(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const result = refreshSchema.safeParse(request.body);
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     await this.authService.logout(result.data.refreshToken);

@@ -11,7 +11,7 @@ export const updateCategorySchema = z.object({
 });
 
 export const categoryParamsSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 });
 
 export type CreateCategoryDto = z.infer<typeof createCategorySchema>;

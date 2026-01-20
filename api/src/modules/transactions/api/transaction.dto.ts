@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const createTransactionSchema = z.object({
-  categoryId: z.string().uuid(),
+  categoryId: z.uuid(),
   amount: z.number().positive(),
   type: z.enum(['INCOME', 'EXPENSE']),
   description: z.string().max(255).optional(),
@@ -9,7 +9,7 @@ export const createTransactionSchema = z.object({
 });
 
 export const updateTransactionSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.uuid().optional(),
   amount: z.number().positive().optional(),
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
   description: z.string().max(255).nullable().optional(),
@@ -20,7 +20,7 @@ export const updateTransactionSchema = z.object({
 });
 
 export const transactionFilterSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.uuid().optional(),
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
   startDate: z
     .string()
@@ -38,7 +38,7 @@ export const monthlySpendingSchema = z.object({
 });
 
 export const transactionParamsSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 });
 
 export type CreateTransactionDto = z.infer<typeof createTransactionSchema>;

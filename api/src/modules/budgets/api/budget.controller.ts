@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { BudgetService } from '../application/budget.service.ts';
 import {
   getBudgetQuerySchema,
@@ -17,7 +18,7 @@ export class BudgetController {
     const result = getBudgetQuerySchema.safeParse(request.query);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const budget = await this.budgetService.getBudget(userId, result.data.month, result.data.year);
@@ -34,7 +35,7 @@ export class BudgetController {
     const result = getBudgetQuerySchema.safeParse(request.query);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const budget = await this.budgetService.getOrCreateBudget(
@@ -61,7 +62,7 @@ export class BudgetController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        queryResult.error.flatten(),
+        z.treeifyError(queryResult.error),
       );
     }
 
@@ -69,7 +70,7 @@ export class BudgetController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        bodyResult.error.flatten(),
+        z.treeifyError(bodyResult.error),
       );
     }
 
@@ -91,7 +92,7 @@ export class BudgetController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        queryResult.error.flatten(),
+        z.treeifyError(queryResult.error),
       );
     }
 
@@ -99,7 +100,7 @@ export class BudgetController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
@@ -120,7 +121,7 @@ export class BudgetController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 

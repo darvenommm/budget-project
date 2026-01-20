@@ -101,7 +101,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   transactionRoutes(app);
   goalRoutes(app);
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof AppError) {
       logger.warn('Application error', {
         code: error.code,
@@ -116,7 +116,8 @@ export async function buildApp(): Promise<FastifyInstance> {
       return;
     }
 
-    logger.error('Unhandled error', { error: error.message, stack: error.stack });
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Unhandled error', { error: err.message, stack: err.stack });
     void reply.status(500).send({ error: 'Internal Server Error', code: 'INTERNAL_ERROR' });
   });
 

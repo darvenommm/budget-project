@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { GoalService } from '../application/goal.service.ts';
 import { createGoalSchema, updateGoalSchema, depositSchema } from './goal.dto.ts';
 import { ValidationError } from '../../../shared/errors/index.ts';
@@ -29,7 +30,7 @@ export class GoalController {
     const result = createGoalSchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const goal = await this.goalService.create(userId, result.data);
@@ -45,7 +46,7 @@ export class GoalController {
     const result = updateGoalSchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const goal = await this.goalService.update(userId, goalId, result.data);
@@ -72,7 +73,7 @@ export class GoalController {
     const result = depositSchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const goal = await this.goalService.deposit(userId, goalId, result.data.amount);

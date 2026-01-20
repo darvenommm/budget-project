@@ -3,13 +3,13 @@ import { z } from 'zod';
 export const createGoalSchema = z.object({
   name: z.string().min(1).max(100),
   targetAmount: z.number().positive(),
-  deadline: z.string().date().optional(),
+  deadline: z.iso.date().optional(),
 });
 
 export const updateGoalSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   targetAmount: z.number().positive().optional(),
-  deadline: z.string().date().nullable().optional(),
+  deadline: z.iso.date().nullable().optional(),
 });
 
 export const depositSchema = z.object({

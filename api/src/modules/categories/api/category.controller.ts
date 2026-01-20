@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { CategoryService } from '../application/category.service.ts';
 import {
   createCategorySchema,
@@ -22,7 +23,7 @@ export class CategoryController {
     const result = createCategorySchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const category = await this.categoryService.create(userId, result.data.name, result.data.icon);
@@ -37,7 +38,7 @@ export class CategoryController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
@@ -45,7 +46,7 @@ export class CategoryController {
     const result = updateCategorySchema.safeParse(request.body);
 
     if (!result.success) {
-      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', result.error.flatten());
+      throw new ValidationError('VALIDATION_FAILED', 'Validation failed', z.treeifyError(result.error));
     }
 
     const category = await this.categoryService.update(userId, categoryId, result.data);
@@ -60,7 +61,7 @@ export class CategoryController {
       throw new ValidationError(
         'VALIDATION_FAILED',
         'Validation failed',
-        paramsResult.error.flatten(),
+        z.treeifyError(paramsResult.error),
       );
     }
 
