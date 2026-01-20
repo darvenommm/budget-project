@@ -37,7 +37,10 @@ async function main(): Promise<void> {
   app.get('/health', async (_request, reply) => {
     const checks = {
       rabbitmq: isRabbitMQConnected(),
-      database: await pool.query('SELECT 1').then(() => true).catch(() => false),
+      database: await pool
+        .query('SELECT 1')
+        .then(() => true)
+        .catch(() => false),
     };
 
     const healthy = Object.values(checks).every(Boolean);

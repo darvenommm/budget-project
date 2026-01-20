@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { logger } from '../shared/logger/index.ts';
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  RABBITMQ_URL: z.string().url(),
+  DATABASE_URL: z.url(),
+  RABBITMQ_URL: z.url(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   PORT: z.coerce.number().default(3001),
@@ -15,8 +16,7 @@ function loadEnv(): Env {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.error('Invalid environment variables:');
-    console.error(result.error.format());
+    logger.error('Invalid environment variables', { errors: z.treeifyError(result.error) });
     process.exit(1);
   }
 

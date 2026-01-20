@@ -1,4 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import type { SettingsService } from './settings.service.ts';
 import { updateSettingsSchema, linkTelegramSchema } from './settings.dto.ts';
 
@@ -30,7 +31,7 @@ export class SettingsController {
     if (!parseResult.success) {
       await reply
         .status(400)
-        .send({ error: 'Invalid request body', details: parseResult.error.flatten() });
+        .send({ error: 'Invalid request body', details: z.treeifyError(parseResult.error) });
       return;
     }
 
@@ -46,7 +47,7 @@ export class SettingsController {
     if (!parseResult.success) {
       await reply
         .status(400)
-        .send({ error: 'Invalid request body', details: parseResult.error.flatten() });
+        .send({ error: 'Invalid request body', details: z.treeifyError(parseResult.error) });
       return;
     }
 

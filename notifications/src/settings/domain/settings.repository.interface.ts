@@ -1,4 +1,4 @@
-import type { NotificationSettings as PrismaNotificationSettings } from '@prisma/client';
+import type { NotificationSettings as PrismaNotificationSettings } from '../../prisma.ts';
 
 export type NotificationSettings = PrismaNotificationSettings;
 

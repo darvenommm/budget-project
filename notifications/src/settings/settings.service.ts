@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../prisma.ts';
 import { prisma } from '../shared/database/index.ts';
 import type { UpdateSettingsDto, SettingsResponse } from './settings.dto.ts';
 
